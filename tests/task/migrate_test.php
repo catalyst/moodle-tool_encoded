@@ -35,7 +35,7 @@ defined('MOODLE_INTERNAL') || die();
  */
 class migrate_test extends advanced_testcase {
     /**
-     * @inheritDoc
+     * Set up before each test.
      */
     protected function setUp(): void {
         $this->resetAfterTest();
@@ -65,7 +65,7 @@ class migrate_test extends advanced_testcase {
         global $DB;
 
         $this->setOutputCallback(function ($output) {
-            // Ignore output
+            // Ignore output.
         });
 
         $generator = self::getDataGenerator();
@@ -81,33 +81,33 @@ class migrate_test extends advanced_testcase {
 
         $this->generate_report_by_table($table, $columns);
 
-        $data_urls = [];
+        $dataurls = [];
         foreach ($columns as $column => $value) {
-            $data_urls[$column] = $this->extract_data_url($value);
+            $dataurls[$column] = $this->extract_data_url($value);
         }
 
-        $record_id = $DB->get_field(
+        $recordid = $DB->get_field(
             'tool_encoded_base64_records',
             'id',
             [
-                'native_id' => $instance->id
+                'native_id' => $instance->id,
             ]
         );
 
         self::assertNotFalse(
-            $record_id,
+            $recordid,
             "$table record with id {$instance->id} not found."
         );
 
         $task = new migrate();
         $task->set_custom_data([
-            'recordid' => $record_id,
+            'recordid' => $recordid,
         ]);
         $task->execute();
 
         $actual = $this->get_instance_by_id($table, $instance->id);
 
-        $plugin_manager = core_plugin_manager::instance();
+        $pluginmanager = core_plugin_manager::instance();
 
         foreach ($columns as $column => $content) {
             self::assertStringContainsString(
@@ -115,28 +115,28 @@ class migrate_test extends advanced_testcase {
                 $actual->$column
             );
 
-            if (!isset($data_urls[$column])) {
+            if (!isset($dataurls[$column])) {
                 continue;
             }
 
-            foreach ($data_urls[$column] as $data) {
+            foreach ($dataurls[$column] as $data) {
                 $base64 = $data['base64'];
                 self::assertStringNotContainsString(
                     $base64,
                     $actual->$column
                 );
 
-                $content_hash = $this->get_content_hash_from_base64($base64);
-                $file = $this->get_file_by_content_hash($content_hash);
+                $contenthash = $this->get_content_hash_from_base64($base64);
+                $file = $this->get_file_by_content_hash($contenthash);
 
-                $file_component = $file->get_component();
+                $filecomponent = $file->get_component();
 
-                $plugin = $plugin_manager->get_plugin_info($file_component);
+                $plugin = $pluginmanager->get_plugin_info($filecomponent);
 
                 self::assertInstanceOf(
                     \core\plugininfo\base::class,
                     $plugin,
-                    "{$file_component} not found."
+                    "{$filecomponent} not found."
                 );
 
                 self::assertEquals(
@@ -153,17 +153,17 @@ class migrate_test extends advanced_testcase {
      *
      * @return array[]
      */
-    public function migration_provider(): array {
+    public static function migration_provider(): array {
         $provider = [];
 
         $base64 = 'R0lGODdhAQABAPAAAP8AAAAAACwAAAAAAQABAAACAkQBADs=';
-        $source = $this->get_data_url('image/gif', $base64);
+        $source = self::get_data_url('image/gif', $base64);
 
         $provider['label intro.'] = [
             'label',
             'mod_label',
             'columns' => [
-                'intro' => '<img alt="Test image" src="'. $source .'" />'
+                'intro' => '<img alt="Test image" src="'. $source .'" />',
             ],
         ];
 
@@ -174,7 +174,7 @@ class migrate_test extends advanced_testcase {
      * Generate a report by table.
      *
      * @param string $table
-     * @param array<string, string> $columns
+     * @param array $columns
      * @return void
      */
     private function generate_report_by_table($table, $columns): void {
@@ -203,7 +203,7 @@ class migrate_test extends advanced_testcase {
         return array_map(function ($mimetype, $base64) {
             return [
                 'mimetype' => $mimetype,
-                'base64' => $base64
+                'base64' => $base64,
             ];
         }, $matches['mimetype'], $matches['base64']);
     }
@@ -224,18 +224,18 @@ class migrate_test extends advanced_testcase {
     /**
      * Get a data URL with base64.
      *
-     * @param string $mime_type
+     * @param string $mimetype
      * @param string $base64
      * @return string
      */
-    private function get_data_url($mime_type, $base64): string {
-        return 'data:' . $mime_type . ';base64,' . $base64;
+    private static function get_data_url($mimetype, $base64): string {
+        return 'data:' . $mimetype . ';base64,' . $base64;
     }
 
     /**
      * Get the columns as string concatenation.
      *
-     * @param array<string, string> $columns
+     * @param array $columns
      * @return string
      */
     private function get_columns_as_string(array $columns): string {
@@ -255,15 +255,15 @@ class migrate_test extends advanced_testcase {
     /**
      * Get a file by its content hash.
      *
-     * @param string $content_hash
+     * @param string $contenthash
      * @return stored_file
      * @throws dml_exception
      */
-    private function get_file_by_content_hash($content_hash): stored_file {
+    private function get_file_by_content_hash($contenthash): stored_file {
         global $DB;
         $record = $DB->get_record(
             'files',
-            ['contenthash' => $content_hash],
+            ['contenthash' => $contenthash],
             '*',
             MUST_EXIST
         );

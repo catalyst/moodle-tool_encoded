@@ -209,7 +209,7 @@ class records extends base {
             ->set_is_sortable(false)
             ->set_disabled_aggregation(['avg', 'count', 'countdistinct', 'max', 'min', 'sum'])
             ->add_callback(static function(string $value, \stdClass $row): string {
-                GLOBAL $OUTPUT;
+                global $OUTPUT;
                 return $OUTPUT->render_from_template('tool_encoded/reportlinks', [
                     'viewlink' => helper::format_view_link($row),
                     'migrate' => helper::can_migrate($row),

@@ -36,7 +36,7 @@ class helper {
      * @return array
      */
     public static function get_mapping(\stdClass $record): array {
-        GLOBAL $DB;
+        global $DB;
 
         $table = $record->report_table;
         $column = $record->report_column;
@@ -87,7 +87,7 @@ class helper {
      * @return int
      */
     private static function get_course_id(\stdClass $record, array $mapping): int {
-        GLOBAL $DB;
+        global $DB;
 
         if ($record->report_table === 'question') {
             $sql = "SELECT
@@ -116,7 +116,7 @@ class helper {
      * @return int
      */
     private static function get_module_id(\stdClass $record, array $mapping): int {
-        GLOBAL $DB;
+        global $DB;
 
         $modulename = str_replace('mod_', '', $mapping['component']);
         $module = $DB->get_record('modules', ['name' => $modulename]);
