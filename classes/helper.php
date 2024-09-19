@@ -43,7 +43,7 @@ class helper {
         $module = $DB->get_record('modules', ['name' => $table]);
         if (isset($module->id) && $column === 'intro') {
             return [
-                'component' => 'mod_' . $column,
+                'component' => 'mod_' . $table,
                 'filearea' => 'intro',
                 'context' => CONTEXT_MODULE,
                 'itemid' => 0,
