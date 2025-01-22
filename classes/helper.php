@@ -104,6 +104,22 @@ class helper {
                     WHERE question.id = :questionid";
             $params = ['questionid' => $record->native_id];
             return $DB->get_record_sql($sql, $params)->course ?? 0;
+        } else if ($record->report_table === 'qtype_match_subquestions') {
+            $sql = "SELECT
+                        quiz.course
+                    FROM
+                        {qtype_match_subquestions} subq
+                    JOIN {question} question ON subq.questionid = question.id
+                    JOIN {question_versions} qv ON question.id = qv.questionid
+                    JOIN {question_bank_entries} qbe ON qbe.id = qv.questionbankentryid
+                    JOIN {question_references} qr ON qr.questionbankentryid = qbe.id
+                        AND qr.component = 'mod_quiz'
+                        AND qr.questionarea = 'slot'
+                    JOIN {quiz_slots} quiz_slots ON qr.itemid = quiz_slots.id
+                    JOIN {quiz} quiz ON quiz_slots.quizid = quiz.id
+                    WHERE subq.id = :subqid";
+            $params = ['subqid' => $record->native_id];
+            return $DB->get_record_sql($sql, $params)->course ?? 0;
         }
         return 0;
     }
@@ -194,6 +210,15 @@ class helper {
                     'context' => CONTEXT_COURSE,
                     'itemid' => '{$id}',
                     'view' => '/question/bank/editquestion/question.php?courseid={$courseid}&id={$id}',
+                ],
+            ],
+            'qtype_match_subquestions' => [
+                'questiontext' => [
+                    'component' => 'qtype_match',
+                    'filearea' => 'subquestion',
+                    'context' => CONTEXT_COURSE,
+                    'itemid' => '{$id}',
+                    'view' => '',
                 ],
             ],
             'book_chapters' => [
