@@ -26,7 +26,11 @@ An admin tool for Moodle. Intended to provide a way to generate reports for colu
    1. View the problematic record in a text editor
    2. Queue an attempt to automatically migrate the base64 data to a pluginfile
 
-At this time view and migrate support has only been implemented for a few specific tables/columns.
+## Supported Tables
+This tool will detect base64 data in all tables, but at this time view and migrate support has only been implemented for a few specific tables/columns. To add a new table:
+1. Add mapping to the get_all_mapping function in the helper class. The mapping should include the table name, column name, and the file info that corresponds to where a file uploaded in the GUI would be stored in mdl_files. You can get these values by saving a file in the GUI.
+   * The view link in the mapping should lead to the page where the text field can be edited in the GUI. This is highly recommended as saving over an item in the GUI will usually convert the base64 data to a pluginfile without requiring a migration (aside from questions where versioning is involved).
+2. Migrations also require the instance id, which is the id of the context i.e. CONTEXT_COURSE uses course id and CONTEXT_MODULE uses module id. If a module id can be found in the same table you can specify a 'simplejoin' with the field name in the mapping, otherwise specific handling will need to be added to the helper functions in get_instance_id().
 
 ## GDPR
 This plugin is GDPR-compliant as it only stores the reference to records and does not restore user data.
