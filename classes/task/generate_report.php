@@ -139,7 +139,7 @@ class generate_report extends adhoc_task {
             foreach ($columns as $column) {
                 $cleanrecord = new \stdClass();
                 // Attempt to get mimetype.
-                preg_match('/data:(.*?);base64/', $record->{$column . '_mimetype'}, $matches);
+                preg_match('/data:(.*?);base64/', $record->{$column . '_mimetype'} ?? '', $matches);
                 if (isset($matches[1])) {
                     $cleanrecord->mimetype = $matches[1];
                 } else {
