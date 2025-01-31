@@ -8,6 +8,10 @@ saved using the Moodle File API it was turned into inline base64 content in the 
 like video's this massively bloats the html and causes all sorts of side effects such as high memory
 consumption and slower performance.
 
+See this tracker for more details:
+
+https://tracker.moodle.org/browse/MDL-80104
+
 This is an admin tool for Moodle which provides a way to generate reports for columns that may
 contain base64 encoded data and then automated the fixing of this data back into normal plugin files.
 
