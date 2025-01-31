@@ -1,5 +1,15 @@
 # moodle-tool_encoded
-An admin tool for Moodle. Intended to provide a way to generate reports for columns that may contain base64 encoded data.
+
+## What is this?
+
+At some time in the past there was a core bug, probably limited to the Atto editor. This mean that
+when content such as an image or video was inserted into an editor instead of being correctly
+saved using the Moodle File API it was turned into inline base64 content in the html. In some cases
+like video's this massively bloats the html and causes all sorts of side effects such as high memory
+consumption and slower performance.
+
+This is an admin tool for Moodle which provides a way to generate reports for columns that may
+contain base64 encoded data and then automated the fixing of this data back into normal plugin files.
 
 * [Installation](#installation)
 * [Usage](#usage)
