@@ -59,7 +59,8 @@ class migrate extends adhoc_task {
         $conditions = [
             'migrated' => 0,
         ];
-        if (!empty($recordid = $this->get_custom_data()->recordid)) {
+        $recordid = $this->get_custom_data()->recordid;
+        if (!empty($recordid)) {
             $conditions['id'] = $recordid;
         }
 
@@ -85,9 +86,13 @@ class migrate extends adhoc_task {
         $success = false;
         // Find the associated table and columns to attempt to replace data within.
         $storedrecord = $DB->get_record($record->report_table, ['id' => $record->native_id]);
+        if (empty($storedrecord)) {
+            return false;
+        }
         // Decode the encoded data.
         $column = $record->report_column;
-        if (!$updatedtext = $this->decode_data($record, $storedrecord->{$column})) {
+        $data = $storedrecord->{$column} ?? '';
+        if (!$data || !$updatedtext = $this->decode_data($record, $data)) {
             return false;
         }
         // Set the column to the link to the file.
