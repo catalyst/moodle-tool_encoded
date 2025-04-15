@@ -46,7 +46,7 @@ class generate_report extends adhoc_task {
             'columns' => $columns,
         ]);
         // Queue the task for the next run.
-        manager::queue_adhoc_task($task);
+        manager::queue_adhoc_task($task, true);
     }
 
     /**
