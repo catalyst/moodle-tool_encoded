@@ -42,7 +42,7 @@ if (!$context = context_system::instance()) {
 
 require_capability('moodle/site:configview', $context);
 
-$url = new moodle_url('/admin/tool/encoded/index.php');
+$url = new moodle_url('/admin/tool/encoded/index.php', ['action' => $action]);
 
 // Display the page.
 $PAGE->set_context(context_system::instance());
@@ -60,17 +60,19 @@ if (data_submitted() && confirm_sesskey()) {
         } else {
             generate_report::queue($form->table, $form->columns);
         }
-        echo notification::success(get_string('generatenotification', 'tool_encoded'));
+        notification::success(get_string('generatenotification', 'tool_encoded'));
     } else if ($action === 'migrate') {
         if (isset($form->recordid)) {
             migrate::queue($form->recordid);
             if ($form->recordid == 0) {
-                echo notification::success(get_string('migratenotificationall', 'tool_encoded'));
+                notification::success(get_string('migratenotificationall', 'tool_encoded'));
             } else {
-                echo notification::success(get_string('migratenotification', 'tool_encoded', $form->recordid));
+                notification::success(get_string('migratenotification', 'tool_encoded', $form->recordid));
             }
         }
     }
+    // Redirect to prevent multiple submits.
+    redirect($url);
 }
 
 if ($action === 'report' || $action === 'migrate') {
