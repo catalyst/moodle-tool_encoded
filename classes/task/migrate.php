@@ -159,7 +159,7 @@ class migrate extends adhoc_task {
             return '';
         }
 
-        switch($mapping['context']) {
+        switch(helper::get_contextlevel($record, $mapping)) {
             case CONTEXT_MODULE:
                 $context = \context_module::instance($record->instance_id);
                 break;
@@ -170,7 +170,11 @@ class migrate extends adhoc_task {
             case CONTEXT_USER:
             case CONTEXT_BLOCK:
             default:
-                return '';
+                $context = $record->context ?? null;
+        }
+
+        if (!isset($context)) {
+            return '';
         }
 
         // Generate parts of filename.
