@@ -29,6 +29,9 @@ namespace tool_encoded;
  * Tool encoded helper class.
  */
 class helper {
+    /** @var string Context used for questions in mapping because it is variable */
+    public const CONTEXT_QUESTION = 'question';
+
     /**
      * Mapping that helps handle report generation and migrations.
      *
@@ -66,7 +69,11 @@ class helper {
             return 0;
         }
 
-        switch($mapping['context']) {
+        if ($mapping['context'] === self::CONTEXT_QUESTION) {
+            return self::get_question_context($record)->instanceid ?? 0;
+        }
+
+        switch(self::get_contextlevel($record, $mapping)) {
             case CONTEXT_MODULE:
                 return self::get_module_id($record, $mapping);
             case CONTEXT_COURSE:
@@ -80,6 +87,63 @@ class helper {
     }
 
     /**
+     * Gets the context level of a record
+     *
+     * @param \stdClass $record
+     * @param array $mapping
+     * @return mixed
+     */
+    public static function get_contextlevel(\stdClass $record, array $mapping) {
+        if (!isset($mapping['context'])) {
+            return null;
+        }
+
+        if ($mapping['context'] === self::CONTEXT_QUESTION) {
+            return self::get_question_context($record)->contextlevel ?? null;
+        }
+
+        return $mapping['context'];
+    }
+
+
+    /**
+     * Gets the context of a question
+     * This is variable and based upon the question category
+     *
+     * @param \stdClass $record
+     * @return mixed
+     */
+    public static function get_question_context(\stdClass $record) {
+        global $DB;
+
+        if (isset($record->context)) {
+            return $record->context;
+        }
+
+        $joins = "JOIN {question_versions} qv ON q.id = qv.questionid
+            JOIN {question_bank_entries} qbe ON qbe.id = qv.questionbankentryid
+            JOIN {question_categories} qc ON qc.id = qbe.questioncategoryid
+            JOIN {context} c ON c.id = qc.contextid";
+
+        if ($record->report_table === 'question') {
+            $where = "q.id = :questionid";
+            $params = ['questionid' => $record->native_id];
+        } else if ($record->report_table === 'qtype_match_subquestions') {
+            $joins .= " JOIN {qtype_match_subquestions} subq ON subq.questionid = q.id";
+            $where = "subq.id = :subqid";
+            $params = ['subqid' => $record->native_id];
+        }
+
+        $sql = "SELECT c.* FROM {question} q $joins WHERE $where";
+        $context = $DB->get_record_sql($sql, $params);
+        if (!empty($context)) {
+            $record->context = $context;
+        }
+
+        return $context;
+    }
+
+    /**
      * Attempts to get the course id for some known tables.
      *
      * @param \stdClass $record
@@ -89,38 +153,8 @@ class helper {
     private static function get_course_id(\stdClass $record, array $mapping): int {
         global $DB;
 
-        if ($record->report_table === 'question') {
-            $sql = "SELECT
-                        quiz.course
-                    FROM
-                        {question} question
-                    JOIN {question_versions} qv ON question.id = qv.questionid
-                    JOIN {question_bank_entries} qbe ON qbe.id = qv.questionbankentryid
-                    JOIN {question_references} qr ON qr.questionbankentryid = qbe.id
-                        AND qr.component = 'mod_quiz'
-                        AND qr.questionarea = 'slot'
-                    JOIN {quiz_slots} quiz_slots ON qr.itemid = quiz_slots.id
-                    JOIN {quiz} quiz ON quiz_slots.quizid = quiz.id
-                    WHERE question.id = :questionid";
-            $params = ['questionid' => $record->native_id];
-            return $DB->get_record_sql($sql, $params)->course ?? 0;
-        } else if ($record->report_table === 'qtype_match_subquestions') {
-            $sql = "SELECT
-                        quiz.course
-                    FROM
-                        {qtype_match_subquestions} subq
-                    JOIN {question} question ON subq.questionid = question.id
-                    JOIN {question_versions} qv ON question.id = qv.questionid
-                    JOIN {question_bank_entries} qbe ON qbe.id = qv.questionbankentryid
-                    JOIN {question_references} qr ON qr.questionbankentryid = qbe.id
-                        AND qr.component = 'mod_quiz'
-                        AND qr.questionarea = 'slot'
-                    JOIN {quiz_slots} quiz_slots ON qr.itemid = quiz_slots.id
-                    JOIN {quiz} quiz ON quiz_slots.quizid = quiz.id
-                    WHERE subq.id = :subqid";
-            $params = ['subqid' => $record->native_id];
-            return $DB->get_record_sql($sql, $params)->course ?? 0;
-        }
+        // Implement SQL for mappings as required.
+
         return 0;
     }
 
@@ -166,15 +200,23 @@ class helper {
      * @return string
      */
     public static function format_view_link(\stdClass $record): string {
-        $link = self::get_mapping($record)['view'] ?? '';
-        if (!$link || empty($record->instance_id)) {
+        $mapping = self::get_mapping($record);
+        $link = $mapping['view'] ?? '';
+        if (!$link) {
+            return '';
+        }
+
+        $contextlevel = self::get_contextlevel($record, $mapping);
+        if (empty($record->instance_id) && $contextlevel != CONTEXT_SYSTEM) {
             return '';
         }
 
         // Add in proper ids.
         $link = str_replace('{$id}', $record->native_id, $link);
         $link = str_replace('{$cmid}', $record->instance_id, $link);
-        $link = str_replace('{$courseid}', $record->instance_id, $link);
+
+        $courseid = $contextlevel == CONTEXT_COURSE ? $record->instance_id : 1;
+        $link = str_replace('{$courseid}', $courseid, $link);
         return $link;
     }
 
@@ -186,7 +228,21 @@ class helper {
      * @return bool
      */
     public static function can_migrate(\stdClass $record): bool {
-        return empty($record->migrated) && !empty($record->instance_id) && !empty(self::get_mapping($record));
+        if (!empty($record->migrated)) {
+            return false;
+        }
+
+        $mapping = self::get_mapping($record);
+        if (empty($mapping)) {
+            return false;
+        }
+
+        $contextlevel = self::get_contextlevel($record, $mapping);
+        if (empty($record->instance_id) && $contextlevel != CONTEXT_SYSTEM) {
+            return false;
+        }
+
+        return true;
     }
 
     /**
@@ -200,14 +256,14 @@ class helper {
                 'questiontext' => [
                     'component' => 'question',
                     'filearea' => 'questiontext',
-                    'context' => CONTEXT_COURSE,
+                    'context' => self::CONTEXT_QUESTION,
                     'itemid' => '{$id}',
                     'view' => '/question/bank/editquestion/question.php?courseid={$courseid}&id={$id}',
                 ],
                 'generalfeedback' => [
                     'component' => 'question',
                     'filearea' => 'generalfeedback',
-                    'context' => CONTEXT_COURSE,
+                    'context' => self::CONTEXT_QUESTION,
                     'itemid' => '{$id}',
                     'view' => '/question/bank/editquestion/question.php?courseid={$courseid}&id={$id}',
                 ],
@@ -216,7 +272,7 @@ class helper {
                 'questiontext' => [
                     'component' => 'qtype_match',
                     'filearea' => 'subquestion',
-                    'context' => CONTEXT_COURSE,
+                    'context' => self::CONTEXT_QUESTION,
                     'itemid' => '{$id}',
                     'view' => '',
                 ],
