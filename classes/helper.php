@@ -69,7 +69,7 @@ class helper {
             return 0;
         }
 
-        if ($mapping['context'] === self::CONTEXT_QUESTION) {
+        if (isset($mapping['context']) && $mapping['context'] === self::CONTEXT_QUESTION) {
             return self::get_question_context($record)->instanceid ?? 0;
         }
 
@@ -99,7 +99,7 @@ class helper {
         }
 
         if ($mapping['context'] === self::CONTEXT_QUESTION) {
-            return self::get_question_context($record)->contextlevel ?? null;
+            return self::get_question_context($record, true)->contextlevel ?? null;
         }
 
         return $mapping['context'];
@@ -111,9 +111,10 @@ class helper {
      * This is variable and based upon the question category
      *
      * @param \stdClass $record
+     * @param bool $addtorecord store the context in the record
      * @return mixed
      */
-    public static function get_question_context(\stdClass $record) {
+    public static function get_question_context(\stdClass $record, bool $addtorecord = false) {
         global $DB;
 
         if (isset($record->context)) {
@@ -136,7 +137,7 @@ class helper {
 
         $sql = "SELECT c.* FROM {question} q $joins WHERE $where";
         $context = $DB->get_record_sql($sql, $params);
-        if (!empty($context)) {
+        if ($addtorecord && !empty($context)) {
             $record->context = $context;
         }
 
