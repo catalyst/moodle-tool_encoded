@@ -154,7 +154,15 @@ class helper {
     private static function get_course_id(\stdClass $record, array $mapping): int {
         global $DB;
 
-        // Implement SQL for mappings as required.
+        $table = $record->report_table;
+        $columns = array_keys($DB->get_columns($table));
+        if (in_array('course', $columns)) {
+            $sql = "SELECT course
+                      FROM {{$table}} t
+                     WHERE t.id = :nativeid";
+            $params = ['nativeid' => $record->native_id];
+            return $DB->get_record_sql($sql, $params)->course ?? 0;
+        }
 
         return 0;
     }
@@ -276,6 +284,15 @@ class helper {
                     'context' => self::CONTEXT_QUESTION,
                     'itemid' => '{$id}',
                     'view' => '',
+                ],
+            ],
+            'course_sections' => [
+                'summary' => [
+                    'component' => 'course',
+                    'filearea' => 'section',
+                    'context' => CONTEXT_COURSE,
+                    'itemid' => '{$id}',
+                    'view' => '/course/editsection.php?id={$id}',
                 ],
             ],
             'book_chapters' => [
