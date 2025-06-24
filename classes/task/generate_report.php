@@ -62,6 +62,14 @@ class generate_report extends adhoc_task {
         \core_php_time_limit::raise();
         raise_memory_limit(MEMORY_HUGE);
 
+        // Validate table.
+        $table = $this->get_custom_data()->table;
+        $tables = $DB->get_tables();
+        if (!in_array($table, $tables)) {
+            mtrace("Invalid table name: $table");
+            return;
+        }
+
         $records = $this->search_columns();
         // Make a deep clone of the records just in case other functions need the raw data.
         $preppedrecords = $this->extend_records(unserialize(serialize($records)));
@@ -69,7 +77,7 @@ class generate_report extends adhoc_task {
         // Delete old report data. Restricting by column isn't neccesary as all relevant columns should be checked.
         $sql = "report_table = :table";
         $params = [
-            'table' => $this->get_custom_data()->table,
+            'table' => $table,
         ];
         $DB->delete_records_select('tool_encoded_base64_records', $sql, $params);
         $DB->delete_records_select('tool_encoded_base64_tables', $sql, $params);
