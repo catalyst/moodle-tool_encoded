@@ -27,6 +27,7 @@ $string['privacy:metadata'] = 'The Site admin presets tool does not store any pe
 $string['generatereport'] = 'Generate report';
 $string['displayreport'] = 'Display report';
 $string['viewreport'] = 'View report';
+$string['queuereport'] = 'Queue base64-encoded data report generation';
 $string['checkbase64check'] = 'Base64 data';
 $string['checkbase64ok'] = 'No base64 data over the minimum threshold of {$a} was detected';
 $string['checkbase64info'] = 'The database contains {$a->size} of base64-encoded data across {$a->columns} columns and {$a->records} records';
