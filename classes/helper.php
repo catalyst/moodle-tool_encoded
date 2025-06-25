@@ -32,6 +32,21 @@ class helper {
     /** @var string Context used for questions in mapping because it is variable */
     public const CONTEXT_QUESTION = 'question';
 
+    /** @var array Preferred extensions to use for mimetypes */
+    public const PREFERRED_EXTENSIONS = [
+        'image/jpeg'        => 'jpg',
+        'image/png'         => 'png',
+        'image/gif'         => 'gif',
+        'text/plain'        => 'txt',
+        'text/xml'          => 'xml',
+        'application/pdf'   => 'pdf',
+        'application/zip'   => 'zip',
+        'application/gzip'  => 'gz',
+        'audio/mpeg'        => 'mp3',
+        'video/mp4'         => 'mp4',
+        'video/quicktime'   => 'mov',
+    ];
+
     /**
      * Mapping that helps handle report generation and migrations.
      *

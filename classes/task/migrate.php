@@ -224,7 +224,7 @@ class migrate extends adhoc_task {
             }
             if (strrpos($mimetype, $info['type']) !== false) {
                 $data = new stdClass();
-                $data->extension = $extension;
+                $data->extension = helper::PREFERRED_EXTENSIONS[$mimetype] ?? $extension;
                 $data->type = $info['type'];
                 $data->group = $info['groups'][0] ?? null;
                 return $data;
