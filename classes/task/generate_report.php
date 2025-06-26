@@ -73,17 +73,37 @@ class generate_report extends adhoc_task {
         $records = $this->search_columns();
         // Make a deep clone of the records just in case other functions need the raw data.
         $preppedrecords = $this->extend_records(unserialize(serialize($records)));
-        $transaction = $DB->start_delegated_transaction();
-        // Delete old report data. Restricting by column isn't neccesary as all relevant columns should be checked.
-        $sql = "report_table = :table";
-        $params = [
-            'table' => $table,
-        ];
-        $DB->delete_records_select('tool_encoded_base64_records', $sql, $params);
-        $DB->delete_records_select('tool_encoded_base64_tables', $sql, $params);
-        $DB->insert_records('tool_encoded_base64_records', $preppedrecords);
-        $DB->insert_record('tool_encoded_base64_tables', $this->get_table_record($stime));
-        $transaction->allow_commit();
+
+        // Upsert base64 records.
+        foreach ($preppedrecords as $record) {
+            $conditions = [
+                'report_table' => $record->report_table,
+                'report_column' => $record->report_column,
+                'native_id' => $record->native_id,
+                'migrated' => 0,
+            ];
+            if ($existing = $DB->get_record('tool_encoded_base64_records', $conditions)) {
+                // Copy fields that shouldn't change.
+                $record->id = $existing->id;
+                $record->timecreated = $existing->timecreated;
+                $DB->update_record('tool_encoded_base64_records', $record);
+            } else {
+                $DB->insert_record('tool_encoded_base64_records', $record);
+            }
+        }
+
+        // Cleanup missing records.
+        $select = 'report_table = :table AND migrated = 0 AND timemodified < :time';
+        $DB->delete_records_select('tool_encoded_base64_records', $select, ['table' => $table, 'time' => $stime]);
+
+        // Upsert table record.
+        $tablerecord = $this->get_table_record($stime);
+        if ($oldrecord = $DB->get_record('tool_encoded_base64_tables', ['report_table' => $table])) {
+            $tablerecord->id = $oldrecord->id;
+            $DB->update_record('tool_encoded_base64_tables', $tablerecord);
+        } else {
+            $DB->insert_record('tool_encoded_base64_tables', $tablerecord);
+        }
     }
 
     /**
@@ -159,12 +179,15 @@ class generate_report extends adhoc_task {
                 if ($cleanrecord->encoded_size < (get_config('tool_encoded', 'size') * 1024)) {
                     continue;
                 }
+                $time = time();
                 $cleanrecord->native_id = (int) $record->id;
                 $cleanrecord->pid = $this->get_pid() ?? 0;
                 $cleanrecord->report_table = $this->get_custom_data()->table;
                 $cleanrecord->report_column = $column;
                 $cleanrecord->migrated = 0;
                 $cleanrecord->instance_id = $record->cmid ?? helper::get_instance_id($cleanrecord);
+                $cleanrecord->timecreated = $time;
+                $cleanrecord->timemodified = $time;
                 $cleanrecords[] = $cleanrecord;
             }
         }
