@@ -33,6 +33,8 @@ use tool_encoded\local\helper;
 require_once(__DIR__ . '/../../../config.php');
 
 $action = optional_param('action', 'report', PARAM_ALPHA);
+$clear = optional_param('clearrecords', null, PARAM_BOOL);
+$confirm = optional_param('confirm', null, PARAM_BOOL);
 
 require_login(0, false);
 
@@ -49,6 +51,19 @@ $PAGE->set_context(context_system::instance());
 $PAGE->set_url($url);
 $PAGE->set_title('Encoded tool');
 $PAGE->set_pagelayout('admin');
+
+if ($clear && !$confirm) {
+    echo $OUTPUT->header();
+    $confirm = new moodle_url($url, ['clearrecords' => 1, 'confirm' => 1, 'sesskey' => sesskey()]);
+    echo $OUTPUT->confirm(get_string('clearconfirm', 'tool_encoded'), $confirm, $url);
+    echo $OUTPUT->footer();
+    exit();
+} else if ($clear && $confirm) {
+    require_sesskey();
+    $DB->delete_records('tool_encoded_base64_records');
+    notification::success(get_string('clearnotification', 'tool_encoded'));
+    redirect($url);
+}
 
 if (data_submitted() && confirm_sesskey()) {
     $form = data_submitted();

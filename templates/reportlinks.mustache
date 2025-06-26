@@ -55,6 +55,7 @@
         <a class="btn btn-primary" href="?action=generate">{{#str}}generatereport, tool_encoded{{/str}}</a>
         {{#count}}
             <button id="migrate_all" class="btn btn-primary" name="action" value="migrate" type="submit">{{#str}}queueallrecords, tool_encoded{{/str}}</button>
+            <a class="btn btn-secondary" href="?action=report&clearrecords=true">{{#str}}clearrecords, tool_encoded{{/str}}</a>
         {{/count}}
     </div>
     {{/migrateall}}
