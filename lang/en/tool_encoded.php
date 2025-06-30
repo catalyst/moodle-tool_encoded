@@ -36,12 +36,14 @@ $string['sizesetting'] = 'Size setting';
 $string['sizesettingdesc'] = 'The size in kilobytes to flag in the generated report.';
 
 // Generate page strings.
+$string['generate'] = 'Generate';
 $string['duration'] = 'Scan time';
 $string['lastchecked'] = 'Last checked';
-$string['recordsfound'] = 'Records found';
-$string['recordsfoundnotfound'] = 'No records found';
+$string['actions'] = 'Actions';
 $string['queuetable'] = 'Queue task for all columns';
-$string['queuealltables'] = 'Queue generation tasks for all ({$a}) tables';
+$string['queuealltables'] = 'Queue generation tasks for all {$a} tables';
+$string['confirmgenerate'] = 'Queue task to detect base64-encoded data in all tables.';
+$string['confirmgeneratetable'] = 'Queue task to detect base64-encoded data in table \'{$a}\'.';
 $string['generatenotification'] = 'Generation task queued';
 
 // RB strings.
@@ -60,13 +62,15 @@ $string['migrated'] = 'Migrated';
 $string['records'] = 'Records';
 $string['maxsize'] = 'Largest';
 $string['totalsize'] = 'Total size';
-$string['clearconfirm'] = 'Clear all report records. This will remove migration history.';
-$string['clearnotification'] = 'All report data has been cleared.';
 $string['clearrecords'] = 'Clear records';
 $string['queuerecord'] = 'Queue migrate task for this record';
 $string['queueallrecords'] = 'Queue migrate tasks for all records';
+$string['confirmmigrate'] = 'Migrate all base64-encoded records to pluginfiles.';
+$string['confirmmigrateid'] = 'Migrate base64-encoded record {$a} to a pluginfile.';
+$string['confirmclear'] = 'Clear all report records. This will remove migration history.';
 $string['migratenotification'] = 'Migrate task queued for record {$a}';
 $string['migratenotificationall'] = 'Migrate task queued for all records';
+$string['clearnotification'] = 'All report data has been cleared.';
 
 // Task status.
 $string['migratesuccess'] = 'Record {$a->id} successfully migrated to pluginfile: {$a->report_table} {$a->report_column} {$a->native_id}';

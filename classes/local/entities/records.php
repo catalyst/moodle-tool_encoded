@@ -210,12 +210,25 @@ class records extends base {
             ->set_disabled_aggregation(['avg', 'count', 'countdistinct', 'max', 'min', 'sum'])
             ->add_callback(static function(string $value, \stdClass $row): string {
                 global $OUTPUT;
-                return $OUTPUT->render_from_template('tool_encoded/reportlinks', [
-                    'viewlink' => helper::format_view_link($row),
-                    'migrate' => helper::can_migrate($row),
-                    'recordid' => $row->id,
-                    'sesskey' => sesskey(),
-                ]);
+
+                $buttons = '';
+
+                // Add migrate button.
+                if (helper::can_migrate($row)) {
+                    $migrateparams = ['action' => 'migrate', 'recordid' => $row->id, 'sesskey' => sesskey()];
+                    $migratebutton = new \single_button(new \moodle_url('/admin/tool/encoded/index.php', $migrateparams),
+                        get_string('migrate', 'tool_encoded'), 'post', helper::get_button_type());
+                    $migratebutton->add_confirm_action(get_string('confirmmigrateid', 'tool_encoded', $row->id));
+                    $buttons .= $OUTPUT->render($migratebutton);
+                }
+
+                // Add view button.
+                if ($view = helper::format_view_link($row)) {
+                    $buttons .= \html_writer::link(new \moodle_url($view),
+                        get_string('view'), ['class' => 'btn btn-secondary btn-sm mx-1']);
+                }
+
+                return $buttons;
             });
         return $columns;
     }

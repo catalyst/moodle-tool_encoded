@@ -208,4 +208,33 @@ class generate_report extends adhoc_task {
         $tablerecord->duration = (time() - $stime);
         return $tablerecord;
     }
+
+    /**
+     * Spawns generate report tasks across all tables with potential issues.
+     *
+     * @throws \dml_exception
+     * @return void
+     */
+    public static function spawnreporttasks(): void {
+        global $DB;
+        // Cached fetch.
+        $tables = $DB->get_tables();
+        foreach ($tables as $table) {
+            $tablecols = $DB->get_columns($table);
+            $allcols = [];
+            foreach ($tablecols as $column) {
+                // Only convert columns that are either text or long varchar.
+                if ($column->meta_type == 'X' || ($column->meta_type == 'C' && $column->max_length > 255)) {
+                    // We only want fields that have an associated format col as they are editable by the user.
+                    if (array_key_exists($column->name . 'format', $tablecols)) {
+                        $allcols[] = $column->name;
+                    }
+                }
+            }
+            if (!empty($allcols)) {
+                $cols = implode(',', $allcols);
+                self::queue($table, $cols);
+            }
+        }
+    }
 }

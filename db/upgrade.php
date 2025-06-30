@@ -80,7 +80,7 @@ function xmldb_tool_encoded_upgrade($oldversion) {
         }
 
         // Queue report generation.
-        \tool_encoded\local\helper::spawnreporttasks();
+        \tool_encoded\task\generate_report::spawnreporttasks();
 
         // Encoded savepoint reached.
         upgrade_plugin_savepoint(true, 2025062600, 'tool', 'encoded');

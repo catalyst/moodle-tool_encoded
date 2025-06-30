@@ -37,6 +37,6 @@ class queue_base64_report extends \core\task\scheduled_task {
      * Execute task
      */
     public function execute() {
-        \tool_encoded\local\helper::spawnreporttasks();
+        generate_report::spawnreporttasks();
     }
 }
