@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="admin/tool/encoded/db" VERSION="20231228" COMMENT="XMLDB file for Moodle admin/tool/encoded"
+<XMLDB PATH="admin/tool/encoded/db" VERSION="20250626" COMMENT="XMLDB file for Moodle admin/tool/encoded"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:noNamespaceSchemaLocation="../../../../lib/xmldb/xmldb.xsd"
 >
@@ -7,7 +7,7 @@
     <TABLE NAME="tool_encoded_base64_tables" COMMENT="Information about previous ad-hoc task runs on tables">
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
-        <FIELD NAME="report_table" TYPE="text" NOTNULL="true" SEQUENCE="false" COMMENT="Table this record was found in."/>
+        <FIELD NAME="report_table" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" COMMENT="Table this record was found in."/>
         <FIELD NAME="report_columns" TYPE="text" NOTNULL="true" SEQUENCE="false" COMMENT="The csv formatted name of columns searched within."/>
         <FIELD NAME="last_checked" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
         <FIELD NAME="duration" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
@@ -22,15 +22,20 @@
         <FIELD NAME="native_id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="The original ID of the record in its table."/>
         <FIELD NAME="instance_id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="The instance ID of the record in its table."/>
         <FIELD NAME="pid" TYPE="int" LENGTH="20" NOTNULL="true" SEQUENCE="false" COMMENT="Our task to get the meta info about the report."/>
-        <FIELD NAME="report_table" TYPE="text" NOTNULL="true" SEQUENCE="false" COMMENT="Table this record was found in."/>
-        <FIELD NAME="report_column" TYPE="text" NOTNULL="true" SEQUENCE="false" COMMENT="Column this record was found in."/>
+        <FIELD NAME="report_table" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" COMMENT="Table this record was found in."/>
+        <FIELD NAME="report_column" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" COMMENT="Column this record was found in."/>
         <FIELD NAME="encoded_size" TYPE="int" LENGTH="20" NOTNULL="true" SEQUENCE="false" COMMENT="The encoded size as bytes."/>
         <FIELD NAME="mimetype" TYPE="char" LENGTH="100" NOTNULL="true" SEQUENCE="false" COMMENT="The type that was found in the column."/>
         <FIELD NAME="migrated" TYPE="int" LENGTH="1" NOTNULL="false" DEFAULT="0" SEQUENCE="false" COMMENT="Migration status."/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
       </FIELDS>
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
       </KEYS>
+      <INDEXES>
+        <INDEX NAME="nativeid" UNIQUE="false" FIELDS="native_id"/>
+      </INDEXES>
     </TABLE>
   </TABLES>
 </XMLDB>

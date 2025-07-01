@@ -18,6 +18,7 @@ namespace tool_encoded\local\systemreports;
 
 use context_system;
 use core_reportbuilder\system_report;
+use tool_encoded\helper;
 use tool_encoded\local\entities\records as record_entity;
 
 /**
@@ -100,4 +101,42 @@ class records extends system_report {
             'records:instance_id',
         ]);
     }
+
+    /**
+     * Gets page buttons for the report table
+     *
+     * @return string
+     */
+    public function get_page_buttons(): string {
+        global $DB, $OUTPUT;
+
+        $buttons = '';
+        $unmigrated = $DB->record_exists('tool_encoded_base64_records', ['migrated' => 0]);
+        $anyrecords = $unmigrated || $DB->record_exists('tool_encoded_base64_records', []);
+
+        // Add button to migrate all records.
+        if ($unmigrated) {
+            $migratebutton = new \single_button(
+                new \moodle_url('/admin/tool/encoded/index.php', ['action' => 'migrate', 'sesskey' => sesskey()]),
+                get_string('queueallrecords', 'tool_encoded'), 'post', helper::get_button_type());
+            $migratebutton->add_confirm_action(get_string('confirmmigrate', 'tool_encoded'));
+            $buttons .= $OUTPUT->render($migratebutton);
+        }
+
+        // Add link to generate page.
+        $buttons .= \html_writer::link(new \moodle_url('/admin/tool/encoded/generate.php'),
+            get_string('generatereport', 'tool_encoded'), ['class' => 'btn btn-secondary m-1']);
+
+        // Add button to clear all records.
+        if ($anyrecords) {
+            $clearbutton = new \single_button(
+                new \moodle_url('/admin/tool/encoded/index.php', ['action' => 'clearrecords', 'sesskey' => sesskey()]),
+                get_string('clearrecords', 'tool_encoded'), 'post');
+            $clearbutton->add_confirm_action(get_string('confirmclear', 'tool_encoded'));
+            $buttons .= $OUTPUT->render($clearbutton);
+        }
+
+        return $buttons;
+    }
+
 }

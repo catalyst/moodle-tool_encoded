@@ -1,0 +1,7 @@
+/* We cannot add classes to single buttons, so format them like btn-sm */
+table .singlebutton .btn {
+    padding: .25rem .5rem;
+    font-size: .8203125rem;
+    line-height: 1.5;
+    border-radius: .2rem;
+}

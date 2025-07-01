@@ -48,6 +48,23 @@ class helper {
     ];
 
     /**
+     * Helper method to get button type across multiple versions
+     *
+     * @param bool $primary Whether this is a primary button, used for styling
+     * @return mixed
+     */
+    public static function get_button_type($primary = true) {
+        global $CFG;
+
+        // Button param was changed in Moodle 4.2 MDL-75337.
+        if ($CFG->version < 2023042400) {
+            return $primary;
+        }
+
+        return $primary ? \single_button::BUTTON_PRIMARY : \single_button::BUTTON_SECONDARY;
+    }
+
+    /**
      * Mapping that helps handle report generation and migrations.
      *
      * @param \stdClass $record

@@ -15,16 +15,23 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Admin tool base64encode version file.
+ * Scheduled tasks for tool_encoded.
  *
- * @package   tool_encoded
- * @copyright 2023 Mathew May <mathew.solutions>
- * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @package    tool_encoded
+ * @author     Benjamin Walker <benjaminwalker@catalyst-au.net>
+ * @copyright  2025, Catalyst IT
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->component = 'tool_encoded';
-$plugin->version = 2025063000;
-$plugin->requires = 2022112800;
-$plugin->supported = [401, 405];
+$tasks = [
+    [
+        'classname' => 'tool_encoded\task\queue_base64_report',
+        'minute' => '0',
+        'hour' => '0',
+        'day' => '1',
+        'dayofweek' => '*',
+        'month' => '*',
+    ],
+];

@@ -14,17 +14,29 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+namespace tool_encoded\task;
+
 /**
- * Admin tool base64encode version file.
+ * Scheduled task to queue generation of base64 report data.
  *
- * @package   tool_encoded
- * @copyright 2023 Mathew May <mathew.solutions>
- * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @package    tool_encoded
+ * @author     Benjamin Walker <benjaminwalker@catalyst-au.net>
+ * @copyright  2025, Catalyst IT
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+class queue_base64_report extends \core\task\scheduled_task {
 
-defined('MOODLE_INTERNAL') || die();
+    /**
+     * Get task name
+     */
+    public function get_name() {
+        return get_string('queuereport', 'tool_encoded');
+    }
 
-$plugin->component = 'tool_encoded';
-$plugin->version = 2025063000;
-$plugin->requires = 2022112800;
-$plugin->supported = [401, 405];
+    /**
+     * Execute task
+     */
+    public function execute() {
+        generate_report::spawnreporttasks();
+    }
+}

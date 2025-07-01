@@ -97,6 +97,7 @@ class migrate extends adhoc_task {
         }
         // Set the column to the link to the file.
         $storedrecord->{$column} = $updatedtext;
+        $storedrecord->timemodified = time();
         if ($DB->update_record($record->report_table, $storedrecord)) {
             $success = true;
         } else {

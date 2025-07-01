@@ -34,8 +34,7 @@ if ($hassiteconfig) {
         new admin_externalpage(
             'tool_encoded_generate',
             get_string('generatereport', 'tool_encoded'),
-            new moodle_url('/admin/tool/encoded/index.php', ['action' => 'generate']),
-            'moodle/site:configview'
+            new moodle_url('/admin/tool/encoded/generate.php'),
         )
     );
 
@@ -44,8 +43,7 @@ if ($hassiteconfig) {
         new admin_externalpage(
             'tool_encoded_report',
             get_string('displayreport', 'tool_encoded'),
-            new moodle_url('/admin/tool/encoded/index.php', ['action' => 'report']),
-            'moodle/site:configview'
+            new moodle_url('/admin/tool/encoded/index.php'),
         )
     );
 

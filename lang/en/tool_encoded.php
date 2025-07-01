@@ -26,16 +26,24 @@ $string['pluginname'] = 'Base64 Encoder';
 $string['privacy:metadata'] = 'The Site admin presets tool does not store any personal data.';
 $string['generatereport'] = 'Generate report';
 $string['displayreport'] = 'Display report';
+$string['viewreport'] = 'View report';
+$string['queuereport'] = 'Queue base64-encoded data report generation';
+$string['checkbase64check'] = 'Base64 data';
+$string['checkbase64ok'] = 'No base64 data over the minimum threshold of {$a} was detected';
+$string['checkbase64info'] = 'The database contains {$a->size} of base64-encoded data across {$a->columns} columns and {$a->records} records';
+$string['checkbase64column'] = 'The \'{$a->column}\' column of the \'{$a->table}\' table contains {$a->size} of base64-encoded data across {$a->records} records';
 $string['sizesetting'] = 'Size setting';
 $string['sizesettingdesc'] = 'The size in kilobytes to flag in the generated report.';
 
 // Generate page strings.
+$string['generate'] = 'Generate';
 $string['duration'] = 'Scan time';
 $string['lastchecked'] = 'Last checked';
-$string['recordsfound'] = 'Records found';
-$string['recordsfoundnotfound'] = 'No records found';
+$string['actions'] = 'Actions';
 $string['queuetable'] = 'Queue task for all columns';
-$string['queuealltables'] = 'Queue generation tasks for all ({$a}) tables';
+$string['queuealltables'] = 'Queue generation tasks for all {$a} tables';
+$string['confirmgenerate'] = 'Queue task to detect base64-encoded data in all tables.';
+$string['confirmgeneratetable'] = 'Queue task to detect base64-encoded data in table \'{$a}\'.';
 $string['generatenotification'] = 'Generation task queued';
 
 // RB strings.
@@ -47,13 +55,22 @@ $string['size'] = '{$a} kb';
 $string['recordid'] = 'Native ID';
 $string['table'] = 'Table';
 $string['column'] = 'Column';
+$string['mapped'] = 'Mapped';
 $string['mime'] = 'MIME Type';
 $string['migrate'] = 'Migrate';
 $string['migrated'] = 'Migrated';
+$string['records'] = 'Records';
+$string['maxsize'] = 'Largest';
+$string['totalsize'] = 'Total size';
+$string['clearrecords'] = 'Clear records';
 $string['queuerecord'] = 'Queue migrate task for this record';
 $string['queueallrecords'] = 'Queue migrate tasks for all records';
+$string['confirmmigrate'] = 'Migrate all base64-encoded records to pluginfiles.';
+$string['confirmmigrateid'] = 'Migrate base64-encoded record {$a} to a pluginfile.';
+$string['confirmclear'] = 'Clear all report records. This will remove migration history.';
 $string['migratenotification'] = 'Migrate task queued for record {$a}';
 $string['migratenotificationall'] = 'Migrate task queued for all records';
+$string['clearnotification'] = 'All report data has been cleared.';
 
 // Task status.
 $string['migratesuccess'] = 'Record {$a->id} successfully migrated to pluginfile: {$a->report_table} {$a->report_column} {$a->native_id}';
