@@ -125,7 +125,8 @@ class generate_report extends adhoc_task {
         foreach ($searchcols as $col) {
             $paramname = $col . '_pos';
             // Use length as size approximation to avoid loading the full base64 file.
-            $sql .= ",LENGTH(t.$col) AS {$col}_size,";
+            $collength = $DB->sql_length("t.$col");
+            $sql .= ",{$collength} AS {$col}_size,";
             // Use a simplified query to get the start of a base64 string, process later.
             $sql .= $DB->sql_substr("t.$col", $DB->sql_position(":$paramname", "t.$col"), 80) . " AS {$col}_mimetype";
             $params += [$paramname => 'data:'];
