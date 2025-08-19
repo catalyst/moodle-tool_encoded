@@ -171,6 +171,100 @@ class migrate_test extends advanced_testcase {
     }
 
     /**
+     * Test the find_base64_uris method.
+     *
+     * @dataProvider find_base64_uris_provider
+     * @param string $input
+     * @param array $expected
+     */
+    public function test_find_base64_uris(string $input, array $expected): void {
+        $actual = migrate::find_base64_uris($input);
+        self::assertEquals($expected, $actual);
+    }
+
+    /**
+     * Data provider for test_find_base64_uris.
+     *
+     * @return array
+     */
+    public static function find_base64_uris_provider(): array {
+        $png = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABAQAAAAA3bvkkAAAACklEQVR4AWNgAAAAAgABc3UBGAAA
+                AABJRU5ErkJggg==';
+        $pnguri = "data:image/png;base64,{$png}";
+        $pngdecoded = base64_decode($png);
+
+        $gif = 'R0lGODlhAQABAIABAP///wAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==';
+        $gifuri = "data:image/gif;base64,{$gif}";
+        $gifdecoded = base64_decode($gif);
+
+        return [
+            // Empty string.
+            [
+                'input' => '',
+                'expected' => [],
+            ],
+            // No base64.
+            [
+                'input' => '<img src="/path/to/image.jpg">',
+                'expected' => [],
+            ],
+            // PNG single quotes.
+            [
+                'input' => "<img src='{$pnguri}'>",
+                'expected' => [
+                    (object) ['uri' => $pnguri, 'decoded' => $pngdecoded],
+                ],
+            ],
+            // PNG double quotes.
+            [
+                'input' => "<img src=\"{$pnguri}\">",
+                'expected' => [
+                    (object) ['uri' => $pnguri, 'decoded' => $pngdecoded],
+                ],
+            ],
+            // PNG and GIF single quotes.
+            [
+                'input' => "<img src='{$pnguri}'><img src='{$gifuri}'>",
+                'expected' => [
+                    (object) ['uri' => $pnguri, 'decoded' => $pngdecoded],
+                    (object) ['uri' => $gifuri, 'decoded' => $gifdecoded],
+                ],
+            ],
+            // PNG and GIF double quotes.
+            [
+                'input' => "<img src=\"{$pnguri}\"><img src=\"{$gifuri}\">",
+                'expected' => [
+                    (object) ['uri' => $pnguri, 'decoded' => $pngdecoded],
+                    (object) ['uri' => $gifuri, 'decoded' => $gifdecoded],
+                ],
+            ],
+            // PNG and GIF mixed quotes.
+            [
+                'input' => "<img src='{$pnguri}'><img src=\"{$gifuri}\">",
+                'expected' => [
+                    (object) ['uri' => $pnguri, 'decoded' => $pngdecoded],
+                    (object) ['uri' => $gifuri, 'decoded' => $gifdecoded],
+                ],
+            ],
+            // PNG with caps.
+            [
+                'input' => "<IMG SRC=\"{$pnguri}\">",
+                'expected' => [
+                    (object) ['uri' => $pnguri, 'decoded' => $pngdecoded],
+                ],
+            ],
+            // PNG and GIF and no base64 with mixed quotes and caps and whitespace.
+            [
+                'input' => "<IMG SRC= '{$pnguri}'><img src =\"{$gifuri}\"><img src = '/path/to/image.jpg'>",
+                'expected' => [
+                    (object) ['uri' => $pnguri, 'decoded' => $pngdecoded],
+                    (object) ['uri' => $gifuri, 'decoded' => $gifdecoded],
+                ],
+            ],
+        ];
+    }
+
+    /**
      * Generate a report by table.
      *
      * @param string $table
