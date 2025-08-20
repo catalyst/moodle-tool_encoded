@@ -197,63 +197,54 @@ final class migrate_test extends advanced_testcase {
         $gifdecoded = base64_decode($gif);
 
         return [
-            // Empty string.
-            [
+            'empty string' => [
                 'input' => '',
                 'expected' => [],
             ],
-            // No base64.
-            [
+            'no base64' => [
                 'input' => '<img src="/path/to/image.jpg">',
                 'expected' => [],
             ],
-            // PNG single quotes.
-            [
+            'png single quotes' => [
                 'input' => "<img src='{$pnguri}'>",
                 'expected' => [
                     (object) ['uri' => $pnguri, 'decoded' => $pngdecoded],
                 ],
             ],
-            // PNG double quotes.
-            [
+            'png double quotes' => [
                 'input' => "<img src=\"{$pnguri}\">",
                 'expected' => [
                     (object) ['uri' => $pnguri, 'decoded' => $pngdecoded],
                 ],
             ],
-            // PNG and GIF single quotes.
-            [
+            'png and gif single quotes' => [
                 'input' => "<img src='{$pnguri}'><img src='{$gifuri}'>",
                 'expected' => [
                     (object) ['uri' => $pnguri, 'decoded' => $pngdecoded],
                     (object) ['uri' => $gifuri, 'decoded' => $gifdecoded],
                 ],
             ],
-            // PNG and GIF double quotes.
-            [
+            'png and gif double quotes' => [
                 'input' => "<img src=\"{$pnguri}\"><img src=\"{$gifuri}\">",
                 'expected' => [
                     (object) ['uri' => $pnguri, 'decoded' => $pngdecoded],
                     (object) ['uri' => $gifuri, 'decoded' => $gifdecoded],
                 ],
             ],
-            // PNG and GIF mixed quotes.
-            [
+            'png and gif mixed quotes' => [
                 'input' => "<img src='{$pnguri}'><img src=\"{$gifuri}\">",
                 'expected' => [
                     (object) ['uri' => $pnguri, 'decoded' => $pngdecoded],
                     (object) ['uri' => $gifuri, 'decoded' => $gifdecoded],
                 ],
             ],
-            // PNG with caps.
-            [
+            'png with caps' => [
                 'input' => "<IMG SRC=\"{$pnguri}\">",
                 'expected' => [
                     (object) ['uri' => $pnguri, 'decoded' => $pngdecoded],
                 ],
             ],
-            // PNG and GIF and no base64 with mixed quotes and caps and whitespace.
-            [
+            'complex mixed case and whitespace' => [
                 'input' => "<IMG SRC= '{$pnguri}'><img src =\"{$gifuri}\"><img src = '/path/to/image.jpg'>",
                 'expected' => [
                     (object) ['uri' => $pnguri, 'decoded' => $pngdecoded],
