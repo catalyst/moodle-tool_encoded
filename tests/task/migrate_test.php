@@ -23,8 +23,6 @@ use dml_exception;
 use stdClass;
 use stored_file;
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Unit tests.
  *
@@ -33,11 +31,12 @@ defined('MOODLE_INTERNAL') || die();
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @covers    \tool_encoded\task\migrate
  */
-class migrate_test extends advanced_testcase {
+final class migrate_test extends advanced_testcase {
     /**
      * Set up before each test.
      */
     protected function setUp(): void {
+        parent::setUp();
         $this->resetAfterTest();
         set_config(
             'size',
