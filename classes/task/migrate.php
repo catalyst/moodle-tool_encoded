@@ -95,7 +95,7 @@ class migrate extends adhoc_task {
         }
 
         // Fetch the data from the referenced record.
-        $data = $referenced->{$columnname};
+        $data = $referenced->{$columnname} ?? null;
 
         // If the data is empty or not a string, we cannot migrate.
         if (empty($data) || !is_string($data)) {
