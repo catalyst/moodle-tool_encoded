@@ -251,6 +251,22 @@ final class migrate_test extends advanced_testcase {
                     (object) ['uri' => $gifuri, 'decoded' => $gifdecoded],
                 ],
             ],
+            'png missing closing single quote' => [
+                'input' => "<img src='{$pnguri}",
+                'expected' => [],
+            ],
+            'png missing closing double quote' => [
+                'input' => "<img src=\"{$pnguri}",
+                'expected' => [],
+            ],
+            'png mismatched quotes' => [
+                'input' => "<img src='{$pnguri}\">",
+                'expected' => [],
+            ],
+            'gif mismatched quotes' => [
+                'input' => "<img src=\"{$gifuri}'>",
+                'expected' => [],
+            ],
         ];
     }
 
