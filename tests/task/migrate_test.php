@@ -245,7 +245,7 @@ final class migrate_test extends advanced_testcase {
                 ],
             ],
             'complex mixed case and whitespace' => [
-                'input' => "<IMG SRC= '{$pnguri}'><img src =\"{$gifuri}\"><img src = '/path/to/image.jpg'>",
+                'input' => "<IMG SRC= '{$pnguri}'><img src =\" {$gifuri} \"><img src = '/path/to/image.jpg'>",
                 'expected' => [
                     (object) ['uri' => $pnguri, 'decoded' => $pngdecoded],
                     (object) ['uri' => $gifuri, 'decoded' => $gifdecoded],
@@ -266,6 +266,43 @@ final class migrate_test extends advanced_testcase {
             'gif mismatched quotes' => [
                 'input' => "<img src=\"{$gifuri}'>",
                 'expected' => [],
+            ],
+            'png url no quotes' => [
+                'input' => "<style>body { background-image: url({$pnguri}); }</style>",
+                'expected' => [
+                    (object) ['uri' => $pnguri, 'decoded' => $pngdecoded],
+                ],
+            ],
+            'png url single quotes' => [
+                'input' => "<style>body { background-image: url('{$pnguri}'); }</style>",
+                'expected' => [
+                    (object) ['uri' => $pnguri, 'decoded' => $pngdecoded],
+                ],
+            ],
+            'png url double quotes' => [
+                'input' => "<style>body { background-image: url(\"{$pnguri}\"); }</style>",
+                'expected' => [
+                    (object) ['uri' => $pnguri, 'decoded' => $pngdecoded],
+                ],
+            ],
+            'png url whitespace' => [
+                'input' => "<style>body { background-image: url( {$pnguri} ); }</style>",
+                'expected' => [
+                    (object) ['uri' => $pnguri, 'decoded' => $pngdecoded],
+                ],
+            ],
+            'gif url whitespace' => [
+                'input' => "<style>body { background-image: url( ' {$gifuri} ' ); }</style>",
+                'expected' => [
+                    (object) ['uri' => $gifuri, 'decoded' => $gifdecoded],
+                ],
+            ],
+            'png src and gif url' => [
+                'input' => "<img src='{$pnguri}'><style>body { background-image: url('{$gifuri}'); }</style>",
+                'expected' => [
+                    (object) ['uri' => $pnguri, 'decoded' => $pngdecoded],
+                    (object) ['uri' => $gifuri, 'decoded' => $gifdecoded],
+                ],
             ],
         ];
     }

@@ -134,14 +134,19 @@ class migrate extends adhoc_task {
     }
 
     /**
-     * Finds all src attributes with base64 data URIs in the given string.
+     * Finds all src and url attributes with base64 data URIs in the given string.
      *
      * @param string $data The complete string to search.
      * @return array An array of objects with 'uri' and 'decoded' properties.
      */
     public static function find_base64_uris(string $data): array {
-        $pattern = '/src\s*=\s*(["\'])(data:([^;]+);base64,([^"\']+))\1/is';
-        preg_match_all($pattern, $data, $matches, PREG_SET_ORDER);
+        $srcpattern = '/src\s*=\s*(["\'])(\s*data:([^;]+);base64,([^"\']+)\s*)\1/is';
+        $urlpattern = '/url\(\s*(["\']?)(\s*data:([^;]+);base64,([^"\']+))\s*\1\s*\)/is';
+
+        preg_match_all($srcpattern, $data, $srcmatches, PREG_SET_ORDER);
+        preg_match_all($urlpattern, $data, $urlmatches, PREG_SET_ORDER);
+
+        $matches = array_merge($srcmatches, $urlmatches);
 
         $results = [];
         foreach ($matches as $match) {
@@ -152,7 +157,7 @@ class migrate extends adhoc_task {
             }
 
             $results[] = (object) [
-                'uri' => $match[2],
+                'uri' => trim($match[2]),
                 'decoded' => $decoded,
             ];
         }
