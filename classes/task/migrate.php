@@ -83,66 +83,86 @@ class migrate extends adhoc_task {
      */
     private function migrate_record(stdClass $record): bool {
         global $DB;
-        $success = false;
-        // Find the associated table and columns to attempt to replace data within.
-        $storedrecord = $DB->get_record($record->report_table, ['id' => $record->native_id]);
-        if (empty($storedrecord)) {
+
+        // Fetch the referenced record.
+        $tablename = $record->report_table;
+        $columnname = $record->report_column;
+        $referenced = $DB->get_record($tablename, ['id' => $record->native_id]);
+
+        // If the referenced record does not exist, we cannot migrate.
+        if ($referenced === false) {
             return false;
         }
-        // Decode the encoded data.
-        $column = $record->report_column;
-        $data = $storedrecord->{$column} ?? '';
-        if (!$data || !$updatedtext = $this->decode_data($record, $data)) {
+
+        // Fetch the data from the referenced record.
+        $data = $referenced->{$columnname} ?? null;
+
+        // If the data is empty or not a string, we cannot migrate.
+        if (empty($data) || !is_string($data)) {
             return false;
         }
-        // Set the column to the link to the file.
-        $storedrecord->{$column} = $updatedtext;
-        $storedrecord->timemodified = time();
-        if ($DB->update_record($record->report_table, $storedrecord)) {
-            $success = true;
-        } else {
-            $success = false;
+
+        // Find all base64 attributes in the data.
+        $results = self::find_base64_uris($data);
+
+        // Generate pluginfile references for each base64 URI.
+        $uris = [];
+        $pluginfiles = [];
+        foreach ($results as $result) {
+            $pluginfile = $this->convert_to_pluginfile($record, $result->decoded);
+
+            if (!empty($pluginfile)) {
+                $uris[] = $result->uri;
+                $pluginfiles[] = $pluginfile;
+            }
         }
 
-        if ($success) {
-            // File was written successfully and the record updated.
-            return true;
+        // If we have no pluginfiles, we cannot migrate.
+        if (empty($pluginfiles)) {
+            return false;
         }
 
-        // File was not written successfully and there was an issue.
-        return false;
+        // Replace the base64 URIs with pluginfile references.
+        $data = str_replace($uris, $pluginfiles, $data);
+
+        // Update the referenced record with the new data.
+        $referenced->{$columnname} = $data;
+        $referenced->timemodified = time();
+        $DB->update_record($tablename, $referenced);
+
+        return true;
     }
 
     /**
-     * Decodes base64 data stored in the database and replaces it with a pluginfile.
+     * Finds all src and url attributes with base64 data URIs in the given string.
      *
-     * @param stdClass $record
-     * @param string $data
-     * @return string
+     * @param string $data The complete string to search.
+     * @return array An array of objects with 'uri' and 'decoded' properties.
      */
-    private function decode_data(stdClass $record, string $data): string {
-        preg_match_all('/src="([^"]+)"/', $data, $matches);
-        if (empty($srcs = $matches[1])) {
-            return '';
+    public static function find_base64_uris(string $data): array {
+        $srcpattern = '/src\s*=\s*(["\'])(\s*data:([^;]+);base64,([^"\']+)\s*)\1/is';
+        $urlpattern = '/url\(\s*(["\']?)(\s*data:([^;]+);base64,([^"\']+))\s*\1\s*\)/is';
+
+        preg_match_all($srcpattern, $data, $srcmatches, PREG_SET_ORDER);
+        preg_match_all($urlpattern, $data, $urlmatches, PREG_SET_ORDER);
+
+        $matches = array_merge($srcmatches, $urlmatches);
+
+        $results = [];
+        foreach ($matches as $match) {
+            $decoded = base64_decode($match[4]);
+
+            if ($decoded === false) {
+                continue;
+            }
+
+            $results[] = (object) [
+                'uri' => trim($match[2]),
+                'decoded' => $decoded,
+            ];
         }
 
-        // TODO: Improve efficiency by not storing the base64 string multiple times.
-        $changes = false;
-        $check = "base64,";
-        foreach ($srcs as $src) {
-            $start = strrpos($src, $check);
-            if ($start === false) {
-                continue;
-            }
-            $base64string = substr($src, $start + strlen($check));
-            $decodeddata = base64_decode($base64string);
-            if (!$pluginfile = $this->convert_to_pluginfile($record, $decodeddata)) {
-                continue;
-            }
-            $data = str_replace($src, $pluginfile, $data);
-            $changes = true;
-        }
-        return ($changes) ? $data : '';
+        return $results;
     }
 
     /**

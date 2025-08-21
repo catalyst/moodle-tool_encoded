@@ -23,8 +23,6 @@ use dml_exception;
 use stdClass;
 use stored_file;
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Unit tests.
  *
@@ -33,11 +31,12 @@ defined('MOODLE_INTERNAL') || die();
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @covers    \tool_encoded\task\migrate
  */
-class migrate_test extends advanced_testcase {
+final class migrate_test extends advanced_testcase {
     /**
      * Set up before each test.
      */
     protected function setUp(): void {
+        parent::setUp();
         $this->resetAfterTest();
         set_config(
             'size',
@@ -168,6 +167,144 @@ class migrate_test extends advanced_testcase {
         ];
 
         return $provider;
+    }
+
+    /**
+     * Test the find_base64_uris method.
+     *
+     * @dataProvider find_base64_uris_provider
+     * @param string $input
+     * @param array $expected
+     */
+    public function test_find_base64_uris(string $input, array $expected): void {
+        $actual = migrate::find_base64_uris($input);
+        self::assertEquals($expected, $actual);
+    }
+
+    /**
+     * Data provider for test_find_base64_uris.
+     *
+     * @return array
+     */
+    public static function find_base64_uris_provider(): array {
+        $png = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABAQAAAAA3bvkkAAAACklEQVR4AWNgAAAAAgABc3UBGAAA
+                AABJRU5ErkJggg==';
+        $pnguri = "data:image/png;base64,{$png}";
+        $pngdecoded = base64_decode($png);
+
+        $gif = 'R0lGODlhAQABAIABAP///wAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==';
+        $gifuri = "data:image/gif;base64,{$gif}";
+        $gifdecoded = base64_decode($gif);
+
+        return [
+            'empty string' => [
+                'input' => '',
+                'expected' => [],
+            ],
+            'no base64' => [
+                'input' => '<img src="/path/to/image.jpg">',
+                'expected' => [],
+            ],
+            'png single quotes' => [
+                'input' => "<img src='{$pnguri}'>",
+                'expected' => [
+                    (object) ['uri' => $pnguri, 'decoded' => $pngdecoded],
+                ],
+            ],
+            'png double quotes' => [
+                'input' => "<img src=\"{$pnguri}\">",
+                'expected' => [
+                    (object) ['uri' => $pnguri, 'decoded' => $pngdecoded],
+                ],
+            ],
+            'png and gif single quotes' => [
+                'input' => "<img src='{$pnguri}'><img src='{$gifuri}'>",
+                'expected' => [
+                    (object) ['uri' => $pnguri, 'decoded' => $pngdecoded],
+                    (object) ['uri' => $gifuri, 'decoded' => $gifdecoded],
+                ],
+            ],
+            'png and gif double quotes' => [
+                'input' => "<img src=\"{$pnguri}\"><img src=\"{$gifuri}\">",
+                'expected' => [
+                    (object) ['uri' => $pnguri, 'decoded' => $pngdecoded],
+                    (object) ['uri' => $gifuri, 'decoded' => $gifdecoded],
+                ],
+            ],
+            'png and gif mixed quotes' => [
+                'input' => "<img src='{$pnguri}'><img src=\"{$gifuri}\">",
+                'expected' => [
+                    (object) ['uri' => $pnguri, 'decoded' => $pngdecoded],
+                    (object) ['uri' => $gifuri, 'decoded' => $gifdecoded],
+                ],
+            ],
+            'png with caps' => [
+                'input' => "<IMG SRC=\"{$pnguri}\">",
+                'expected' => [
+                    (object) ['uri' => $pnguri, 'decoded' => $pngdecoded],
+                ],
+            ],
+            'complex mixed case and whitespace' => [
+                'input' => "<IMG SRC= '{$pnguri}'><img src =\" {$gifuri} \"><img src = '/path/to/image.jpg'>",
+                'expected' => [
+                    (object) ['uri' => $pnguri, 'decoded' => $pngdecoded],
+                    (object) ['uri' => $gifuri, 'decoded' => $gifdecoded],
+                ],
+            ],
+            'png missing closing single quote' => [
+                'input' => "<img src='{$pnguri}",
+                'expected' => [],
+            ],
+            'png missing closing double quote' => [
+                'input' => "<img src=\"{$pnguri}",
+                'expected' => [],
+            ],
+            'png mismatched quotes' => [
+                'input' => "<img src='{$pnguri}\">",
+                'expected' => [],
+            ],
+            'gif mismatched quotes' => [
+                'input' => "<img src=\"{$gifuri}'>",
+                'expected' => [],
+            ],
+            'png url no quotes' => [
+                'input' => "<style>body { background-image: url({$pnguri}); }</style>",
+                'expected' => [
+                    (object) ['uri' => $pnguri, 'decoded' => $pngdecoded],
+                ],
+            ],
+            'png url single quotes' => [
+                'input' => "<style>body { background-image: url('{$pnguri}'); }</style>",
+                'expected' => [
+                    (object) ['uri' => $pnguri, 'decoded' => $pngdecoded],
+                ],
+            ],
+            'png url double quotes' => [
+                'input' => "<style>body { background-image: url(\"{$pnguri}\"); }</style>",
+                'expected' => [
+                    (object) ['uri' => $pnguri, 'decoded' => $pngdecoded],
+                ],
+            ],
+            'png url whitespace' => [
+                'input' => "<style>body { background-image: url( {$pnguri} ); }</style>",
+                'expected' => [
+                    (object) ['uri' => $pnguri, 'decoded' => $pngdecoded],
+                ],
+            ],
+            'gif url whitespace' => [
+                'input' => "<style>body { background-image: url( ' {$gifuri} ' ); }</style>",
+                'expected' => [
+                    (object) ['uri' => $gifuri, 'decoded' => $gifdecoded],
+                ],
+            ],
+            'png src and gif url' => [
+                'input' => "<img src='{$pnguri}'><style>body { background-image: url('{$gifuri}'); }</style>",
+                'expected' => [
+                    (object) ['uri' => $pnguri, 'decoded' => $pngdecoded],
+                    (object) ['uri' => $gifuri, 'decoded' => $gifdecoded],
+                ],
+            ],
+        ];
     }
 
     /**
