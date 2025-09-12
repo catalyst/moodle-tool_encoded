@@ -107,7 +107,7 @@ class helper {
 
         switch(self::get_contextlevel($record, $mapping)) {
             case CONTEXT_MODULE:
-                return self::get_module_id($record, $mapping);
+                return self::get_coursemodule_id($record, $mapping);
             case CONTEXT_COURSE:
                 return self::get_course_id($record, $mapping);
             // TODO: Implement remaining contexts.
@@ -200,13 +200,13 @@ class helper {
     }
 
     /**
-     * Attempts to get the module id for some module subtables.
+     * Attempts to get the coursemodule id.
      *
      * @param \stdClass $record
      * @param array $mapping
      * @return int
      */
-    private static function get_module_id(\stdClass $record, array $mapping): int {
+    private static function get_coursemodule_id(\stdClass $record, array $mapping): int {
         global $DB;
 
         $modulename = str_replace('mod_', '', $mapping['component']);
@@ -215,21 +215,15 @@ class helper {
             return 0;
         }
 
+        // To get the coursemodule id, we need the module instance id.
         $table = $record->report_table;
-        $modulecols = array_keys($DB->get_columns($modulename));
-        if (!empty($simplejoin = $mapping['simplejoin']) && in_array('course', $modulecols)) {
-            $sql = "SELECT
-                        cm.id
-                    FROM
-                        {{$table}} t
-                    JOIN {{$modulename}} m ON m.id = t.{$simplejoin}
-                    JOIN {course_modules} cm ON cm.course = m.course AND cm.instance = m.id AND cm.module = :moduleid
-                    WHERE t.id = :nativeid";
-            $params = [
-                'moduleid' => $module->id,
-                'nativeid' => $record->native_id,
-            ];
-            return $DB->get_record_sql($sql, $params)->id ?? 0;
+        if (isset($mapping['simplelookup'])) {
+            // If the instance id is in the same table we can get this with a simple lookup.
+            $moduleinstance = $DB->get_field($table, $mapping['simplelookup'], ['id' => $record->native_id]);
+        }
+
+        if (!empty($moduleinstance)) {
+            return get_coursemodule_from_instance($modulename, $moduleinstance)->id ?? 0;
         }
         return 0;
     }
@@ -334,7 +328,7 @@ class helper {
                     'context' => CONTEXT_MODULE,
                     'itemid' => '{$id}',
                     'view' => '/mod/book/edit.php?cmid={$cmid}&id={$id}',
-                    'simplejoin' => 'bookid',
+                    'simplelookup' => 'bookid',
                 ],
             ],
             'lesson_pages' => [
@@ -344,7 +338,7 @@ class helper {
                     'context' => CONTEXT_MODULE,
                     'itemid' => '{$id}',
                     'view' => '/mod/lesson/editpage.php?id={$cmid}&pageid={$id}&edit=1',
-                    'simplejoin' => 'lessonid',
+                    'simplelookup' => 'lessonid',
                 ],
             ],
         ];
