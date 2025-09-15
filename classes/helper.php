@@ -32,6 +32,9 @@ class helper {
     /** @var string Context used for questions in mapping because it is variable */
     public const CONTEXT_QUESTION = 'question';
 
+    /** @var string Context used for grades in mapping because it is variable */
+    public const CONTEXT_GRADE = 'grade';
+
     /** @var array Preferred extensions to use for mimetypes */
     public const PREFERRED_EXTENSIONS = [
         'image/jpeg'        => 'jpg',
@@ -101,8 +104,9 @@ class helper {
             return 0;
         }
 
-        if (isset($mapping['context']) && $mapping['context'] === self::CONTEXT_QUESTION) {
-            return self::get_question_context($record)->instanceid ?? 0;
+        $variablecontext = self::get_variable_context($record, $mapping);
+        if (isset($variablecontext)) {
+            return $variablecontext->instanceid ?? 0;
         }
 
         switch(self::get_contextlevel($record, $mapping)) {
@@ -130,11 +134,44 @@ class helper {
             return null;
         }
 
-        if ($mapping['context'] === self::CONTEXT_QUESTION) {
-            return self::get_question_context($record, true)->contextlevel ?? null;
+        $variablecontext = self::get_variable_context($record, $mapping, true);
+        if (isset($variablecontext)) {
+            return $variablecontext->contextlevel ?? null;
         }
 
         return $mapping['context'];
+    }
+
+
+    /**
+     * Gets context for a record that can be variable
+     *
+     * @param \stdClass $record
+     * @param array $mapping
+     * @param bool $addtorecord store the context in the record
+     * @return mixed
+     */
+    public static function get_variable_context(\stdClass $record, array $mapping, bool $addtorecord = false) {
+        if (isset($record->context)) {
+            return $record->context;
+        }
+
+        switch($mapping['context'] ?? null) {
+            case self::CONTEXT_QUESTION:
+                $context = self::get_question_context($record);
+                break;
+            case self::CONTEXT_GRADE:
+                $context = self::get_grade_context($record);
+                break;
+            default:
+                return null;
+        }
+
+        if (!empty($context) && $addtorecord) {
+            $record->context = $context;
+        }
+
+        return $context;
     }
 
 
@@ -143,15 +180,10 @@ class helper {
      * This is variable and based upon the question category
      *
      * @param \stdClass $record
-     * @param bool $addtorecord store the context in the record
      * @return mixed
      */
-    public static function get_question_context(\stdClass $record, bool $addtorecord = false) {
+    public static function get_question_context(\stdClass $record): mixed {
         global $DB;
-
-        if (isset($record->context)) {
-            return $record->context;
-        }
 
         $joins = "JOIN {question_versions} qv ON q.id = qv.questionid
             JOIN {question_bank_entries} qbe ON qbe.id = qv.questionbankentryid
@@ -168,12 +200,27 @@ class helper {
         }
 
         $sql = "SELECT c.* FROM {question} q $joins WHERE $where";
-        $context = $DB->get_record_sql($sql, $params);
-        if ($addtorecord && !empty($context)) {
-            $record->context = $context;
+        return $DB->get_record_sql($sql, $params);
+    }
+
+    /**
+     * Gets the context of a grade
+     * This is variable and based upon the grade item
+     *
+     * @param \stdClass $record
+     * @return mixed
+     */
+    public static function get_grade_context(\stdClass $record) {
+        global $CFG, $DB;
+        require_once($CFG->libdir.'/gradelib.php');
+
+        $itemid = $DB->get_field($record->report_table, 'itemid', ['id' => $record->native_id]);
+        if (empty($itemid)) {
+            return false;
         }
 
-        return $context;
+        $grade = new \grade_grade(['itemid' => $itemid], false);
+        return $grade->get_context();
     }
 
     /**
@@ -364,6 +411,24 @@ class helper {
                     'context' => CONTEXT_MODULE,
                     'itemid' => 0,
                     'view' => '/course/modedit.php?update={$cmid}',
+                ],
+            ],
+            'grade_grades' => [
+                'feedback' => [
+                    'component' => 'grade',
+                    'filearea' => 'feedback',
+                    'context' => self::CONTEXT_GRADE,
+                    'itemid' => '{$id}',
+                    'view' => '',
+                ],
+            ],
+            'grade_grades_history' => [
+                'feedback' => [
+                    'component' => 'grade',
+                    'filearea' => 'historyfeedback',
+                    'context' => self::CONTEXT_GRADE,
+                    'itemid' => '{$id}',
+                    'view' => '',
                 ],
             ],
         ];
