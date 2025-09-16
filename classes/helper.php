@@ -185,18 +185,23 @@ class helper {
     public static function get_question_context(\stdClass $record): mixed {
         global $DB;
 
+        // Manually get context to avoid loading the question.
         $joins = "JOIN {question_versions} qv ON q.id = qv.questionid
             JOIN {question_bank_entries} qbe ON qbe.id = qv.questionbankentryid
             JOIN {question_categories} qc ON qc.id = qbe.questioncategoryid
             JOIN {context} c ON c.id = qc.contextid";
 
-        if ($record->report_table === 'question') {
+        $table = $record->report_table;
+        if ($table === 'question') {
             $where = "q.id = :questionid";
             $params = ['questionid' => $record->native_id];
-        } else if ($record->report_table === 'qtype_match_subquestions') {
-            $joins .= " JOIN {qtype_match_subquestions} subq ON subq.questionid = q.id";
+        } else if (strpos($table, 'qtype_') === 0) {
+            // All tables starting with qtype should contain questionid.
+            $joins .= " JOIN {{$table}} subq ON subq.questionid = q.id";
             $where = "subq.id = :subqid";
             $params = ['subqid' => $record->native_id];
+        } else {
+            return false;
         }
 
         $sql = "SELECT c.* FROM {question} q $joins WHERE $where";
@@ -360,6 +365,22 @@ class helper {
             'qtype_match_subquestions' => [
                 'questiontext' => [
                     'component' => 'qtype_match',
+                    'filearea' => 'subquestion',
+                    'context' => self::CONTEXT_QUESTION,
+                    'itemid' => '{$id}',
+                    'view' => '',
+                ],
+            ],
+            'qtype_ddmatch_subquestions' => [
+                'answertext' => [
+                    'component' => 'qtype_ddmatch',
+                    'filearea' => 'subanswer',
+                    'context' => self::CONTEXT_QUESTION,
+                    'itemid' => '{$id}',
+                    'view' => '',
+                ],
+                'questiontext' => [
+                    'component' => 'qtype_ddmatch',
                     'filearea' => 'subquestion',
                     'context' => self::CONTEXT_QUESTION,
                     'itemid' => '{$id}',
