@@ -357,6 +357,15 @@ class helper {
                     'view' => '/mod/forum/post.php?edit={$id}',
                 ],
             ],
+            'page' => [
+                'content' => [
+                    'component' => 'mod_page',
+                    'filearea' => 'content',
+                    'context' => CONTEXT_MODULE,
+                    'itemid' => 0,
+                    'view' => '/course/modedit.php?update={$cmid}',
+                ],
+            ],
         ];
     }
 }
