@@ -220,6 +220,13 @@ class helper {
         if (isset($mapping['simplelookup'])) {
             // If the instance id is in the same table we can get this with a simple lookup.
             $moduleinstance = $DB->get_field($table, $mapping['simplelookup'], ['id' => $record->native_id]);
+        } else if ($table === 'forum_posts') {
+            $sql = "SELECT d.forum
+                      FROM {forum_posts} p
+                      JOIN {forum_discussions} d ON d.id = p.discussion
+                     WHERE p.id = :postid";
+            $params = ['postid' => $record->native_id];
+            $moduleinstance = $DB->get_field_sql($sql, $params);
         }
 
         if (!empty($moduleinstance)) {
@@ -339,6 +346,15 @@ class helper {
                     'itemid' => '{$id}',
                     'view' => '/mod/lesson/editpage.php?id={$cmid}&pageid={$id}&edit=1',
                     'simplelookup' => 'lessonid',
+                ],
+            ],
+            'forum_posts' => [
+                'message' => [
+                    'component' => 'mod_forum',
+                    'filearea' => 'post',
+                    'context' => CONTEXT_MODULE,
+                    'itemid' => '{$id}',
+                    'view' => '/mod/forum/post.php?edit={$id}',
                 ],
             ],
         ];
