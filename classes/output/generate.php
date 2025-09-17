@@ -121,17 +121,7 @@ class generate extends \flexible_table {
         // Cached fetch.
         $tables = $DB->get_tables();
         foreach ($tables as $table) {
-            $tablecols = $DB->get_columns($table);
-            $potentialcols = [];
-            foreach ($tablecols as $column) {
-                // Only convert columns that are either text or long varchar.
-                if ($column->meta_type == 'X' || ($column->meta_type == 'C' && $column->max_length > 255)) {
-                    // We only want fields that have an associated format col as they are editable by the user.
-                    if (array_key_exists($column->name . 'format', $tablecols)) {
-                        $potentialcols[] = $column->name;
-                    }
-                }
-            }
+            $potentialcols = self::get_editor_columns($table);
 
             // Add tables with potential columns to the report.
             if (!empty($potentialcols)) {
@@ -151,6 +141,39 @@ class generate extends \flexible_table {
             }
         }
         ksort($this->tabledata);
+    }
+
+    /**
+     * Gets columns that contain user editable text.
+     *
+     * @param string $table
+     * @return array column names
+     */
+    public static function get_editor_columns(string $table): array {
+        global $DB;
+
+        // Some editor columns don't have an exact match for the 'format' column and need to be hardcoded.
+        $includecolumns = [
+            'assignfeedback_comments' => [
+                'commenttext' => 'commentformat',
+            ],
+            'assignsubmission_onlinetext' => [
+                'onlinetext' => 'onlineformat',
+            ],
+        ];
+
+        $editorcolumns = [];
+        $tablecols = $DB->get_columns($table);
+        foreach ($tablecols as $column) {
+            // Only convert columns that are either text or long varchar.
+            if ($column->meta_type == 'X' || ($column->meta_type == 'C' && $column->max_length > 255)) {
+                // We only want fields that have an associated format col as they are editable by the user.
+                if (array_key_exists($column->name . 'format', $tablecols) || isset($includecolumns[$table][$column->name])) {
+                    $editorcolumns[] = $column->name;
+                }
+            }
+        }
+        return $editorcolumns;
     }
 
     /**
