@@ -207,7 +207,7 @@ class migrate extends adhoc_task {
             'contextid' => $context->id,
             'component' => $mapping['component'],
             'filearea' => $mapping['filearea'],
-            'itemid' => str_replace('{$id}', $record->native_id, $mapping['itemid']),
+            'itemid' => helper::resolve_placeholder_ids($record, $mapping['itemid'], $context->contextlevel ?? ''),
             'filepath' => '/',
             'filename' => $basename . '_' . uniqid() . $extension,
             'source' => 'tool_encoded',

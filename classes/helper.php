@@ -261,7 +261,7 @@ class helper {
     private static function get_coursemodule_id(\stdClass $record, array $mapping): int {
         global $DB;
 
-        $modulename = str_replace('mod_', '', $mapping['component']);
+        $modulename = $mapping['modulename'] ?? str_replace('mod_', '', $mapping['component']);
         $module = $DB->get_record('modules', ['name' => $modulename]);
         if (!isset($module)) {
             return 0;
@@ -305,13 +305,33 @@ class helper {
             return '';
         }
 
-        // Add in proper ids.
-        $link = str_replace('{$id}', $record->native_id, $link);
-        $link = str_replace('{$cmid}', $record->instance_id, $link);
+        return self::resolve_placeholder_ids($record, $link, $contextlevel);
+    }
+
+    /**
+     * Resolves placeholder IDs.
+     *
+     * @param \stdClass $record
+     * @param string $text text to resolve
+     * @param string $contextlevel
+     * @return string
+     */
+    public static function resolve_placeholder_ids(\stdClass $record, string $text, string $contextlevel): string {
+        global $DB;
+
+        $text = str_replace('{$id}', $record->native_id, $text);
+        $text = str_replace('{$cmid}', $record->instance_id, $text);
 
         $courseid = $contextlevel == CONTEXT_COURSE ? $record->instance_id : 1;
-        $link = str_replace('{$courseid}', $courseid, $link);
-        return $link;
+        $text = str_replace('{$courseid}', $courseid, $text);
+
+        // Some may require DB calls. TODO: Look into storing other ids in the record.
+        if (strpos($text, '{$assigngradeid}') !== false) {
+            if ($assigngradeid = $DB->get_field($record->report_table, 'grade', ['id' => $record->native_id])) {
+                $text = str_replace('{$assigngradeid}', $assigngradeid, $text);
+            }
+        }
+        return $text;
     }
 
     /**
@@ -450,6 +470,18 @@ class helper {
                     'context' => self::CONTEXT_GRADE,
                     'itemid' => '{$id}',
                     'view' => '',
+                ],
+            ],
+            'assignfeedback_comments' => [
+                'commenttext' => [
+                    'component' => 'assignfeedback_comments',
+                    'filearea' => 'feedback',
+                    'context' => CONTEXT_MODULE,
+                    'itemid' => '{$assigngradeid}',
+                    'view' => '/mod/assign/view.php?id={$cmid}&gid={$assigngradeid}&plugin=comments' .
+                        '&action=viewpluginassignfeedback&returnaction=grading&returnparams',
+                    'simplelookup' => 'assignment',
+                    'modulename' => 'assign',
                 ],
             ],
         ];
