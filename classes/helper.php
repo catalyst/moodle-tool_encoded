@@ -417,7 +417,7 @@ class helper {
                     'filearea' => 'subquestion',
                     'context' => self::CONTEXT_QUESTION,
                     'itemid' => '{$id}',
-                    'view' => '',
+                    'view' => '/question/bank/editquestion/question.php?courseid={$courseid}&id={$questionid}',
                 ],
             ],
             'qtype_ddmatch_subquestions' => [
@@ -426,14 +426,14 @@ class helper {
                     'filearea' => 'subanswer',
                     'context' => self::CONTEXT_QUESTION,
                     'itemid' => '{$id}',
-                    'view' => '',
+                    'view' => '/question/bank/editquestion/question.php?courseid={$courseid}&id={$questionid}',
                 ],
                 'questiontext' => [
                     'component' => 'qtype_ddmatch',
                     'filearea' => 'subquestion',
                     'context' => self::CONTEXT_QUESTION,
                     'itemid' => '{$id}',
-                    'view' => '',
+                    'view' => '/question/bank/editquestion/question.php?courseid={$courseid}&id={$questionid}',
                 ],
             ],
             'qtype_essay_options' => [
