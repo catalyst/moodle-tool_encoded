@@ -195,6 +195,10 @@ class helper {
         if ($table === 'question') {
             $where = "q.id = :questionid";
             $params = ['questionid' => $record->native_id];
+        } else if ($table === 'question_answers') {
+            $joins .= " JOIN {{$table}} qa ON qa.question = q.id";
+            $where = "qa.id = :questionanswerid";
+            $params = ['questionanswerid' => $record->native_id];
         } else if (strpos($table, 'qtype_') === 0) {
             // All tables starting with qtype should contain questionid.
             $joins .= " JOIN {{$table}} subq ON subq.questionid = q.id";
@@ -334,6 +338,11 @@ class helper {
             if ($assignsubmissionid = $DB->get_field($record->report_table, 'submission', ['id' => $record->native_id])) {
                 $text = str_replace('{$assignsubmissionid}', $assignsubmissionid, $text);
             }
+        } else if (strpos($text, '{$questionid') !== false) {
+            $columnname = $record->report_table === 'question_answers' ? 'question' : 'questionid';
+            if ($questionid = $DB->get_field($record->report_table, $columnname, ['id' => $record->native_id])) {
+                $text = str_replace('{$questionid}', $questionid, $text);
+            }
         }
         return $text;
     }
@@ -384,6 +393,22 @@ class helper {
                     'context' => self::CONTEXT_QUESTION,
                     'itemid' => '{$id}',
                     'view' => '/question/bank/editquestion/question.php?courseid={$courseid}&id={$id}',
+                ],
+            ],
+            'question_answers' => [
+                'answer' => [
+                    'component' => 'question',
+                    'filearea' => 'answer',
+                    'context' => self::CONTEXT_QUESTION,
+                    'itemid' => '{$id}',
+                    'view' => '/question/bank/editquestion/question.php?courseid={$courseid}&id={$questionid}',
+                ],
+                'feedback' => [
+                    'component' => 'question',
+                    'filearea' => 'answerfeedback',
+                    'context' => self::CONTEXT_QUESTION,
+                    'itemid' => '{$id}',
+                    'view' => '/question/bank/editquestion/question.php?courseid={$courseid}&id={$questionid}',
                 ],
             ],
             'qtype_match_subquestions' => [
