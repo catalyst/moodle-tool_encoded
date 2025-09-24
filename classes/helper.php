@@ -330,6 +330,10 @@ class helper {
             if ($assigngradeid = $DB->get_field($record->report_table, 'grade', ['id' => $record->native_id])) {
                 $text = str_replace('{$assigngradeid}', $assigngradeid, $text);
             }
+        } else if (strpos($text, '{$assignsubmissionid}') !== false) {
+            if ($assignsubmissionid = $DB->get_field($record->report_table, 'submission', ['id' => $record->native_id])) {
+                $text = str_replace('{$assignsubmissionid}', $assignsubmissionid, $text);
+            }
         }
         return $text;
     }
@@ -480,6 +484,18 @@ class helper {
                     'itemid' => '{$assigngradeid}',
                     'view' => '/mod/assign/view.php?id={$cmid}&gid={$assigngradeid}&plugin=comments' .
                         '&action=viewpluginassignfeedback&returnaction=grading&returnparams',
+                    'simplelookup' => 'assignment',
+                    'modulename' => 'assign',
+                ],
+            ],
+            'assignsubmission_onlinetext' => [
+                'onlinetext' => [
+                    'component' => 'assignsubmission_onlinetext',
+                    'filearea' => 'submissions_onlinetext',
+                    'context' => CONTEXT_MODULE,
+                    'itemid' => '{$assignsubmissionid}',
+                    'view' => '/mod/assign/view.php?id={$cmid}&sid={$assignsubmissionid}&plugin=onlinetext' .
+                        '&action=viewpluginassignsubmission&returnaction=grading&returnparams',
                     'simplelookup' => 'assignment',
                     'modulename' => 'assign',
                 ],
