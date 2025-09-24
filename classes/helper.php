@@ -436,6 +436,16 @@ class helper {
                     'view' => '',
                 ],
             ],
+            'qtype_essay_options' => [
+                'graderinfo' => [
+                    'component' => 'qtype_essay',
+                    'filearea' => 'graderinfo',
+                    'context' => self::CONTEXT_QUESTION,
+                    'itemid' => '{$id}',
+                    'view' => '/question/bank/editquestion/question.php?courseid={$courseid}&id={$questionid}',
+                ],
+                // The responsetemplate column doesn't allow pluginfiles so we can't store the data safely.
+            ],
             'course_sections' => [
                 'summary' => [
                     'component' => 'course',
