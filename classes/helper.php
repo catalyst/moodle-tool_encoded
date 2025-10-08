@@ -182,7 +182,7 @@ class helper {
      * @param \stdClass $record
      * @return mixed
      */
-    public static function get_question_context(\stdClass $record): mixed {
+    public static function get_question_context(\stdClass $record) {
         global $DB;
 
         // Manually get context to avoid loading the question.
