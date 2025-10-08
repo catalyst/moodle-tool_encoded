@@ -182,10 +182,10 @@ class migrate extends adhoc_task {
 
         switch(helper::get_contextlevel($record, $mapping)) {
             case CONTEXT_MODULE:
-                $context = \context_module::instance($record->instance_id);
+                $context = \context_module::instance($record->instance_id, IGNORE_MISSING);
                 break;
             case CONTEXT_COURSE:
-                $context = \context_course::instance($record->instance_id);
+                $context = \context_course::instance($record->instance_id, IGNORE_MISSING);
                 break;
             // TODO: Implement remaining contexts.
             case CONTEXT_USER:
@@ -194,7 +194,8 @@ class migrate extends adhoc_task {
                 $context = $record->context ?? null;
         }
 
-        if (!isset($context)) {
+        // Skip processing of records with missing context.
+        if (!isset($context) || $context === false) {
             return '';
         }
 
