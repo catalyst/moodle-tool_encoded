@@ -326,7 +326,7 @@ class helper {
         $text = str_replace('{$id}', $record->native_id, $text);
         $text = str_replace('{$cmid}', $record->instance_id, $text);
 
-        $courseid = $contextlevel == CONTEXT_COURSE ? $record->instance_id : 1;
+        $courseid = $contextlevel == CONTEXT_COURSE ? $record->instance_id : SITEID;
         $text = str_replace('{$courseid}', $courseid, $text);
 
         // Some may require DB calls. TODO: Look into storing other ids in the record.
