@@ -28,7 +28,7 @@ defined('MOODLE_INTERNAL') || die();
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @covers    \tool_encoded\task\generate_report
  */
-class generate_report_test extends \advanced_testcase {
+final class generate_report_test extends \advanced_testcase {
     /**
      * Confirm the task is created and executed.
      *
@@ -38,7 +38,7 @@ class generate_report_test extends \advanced_testcase {
      * @param array $records The expected records.
      * @return void
      */
-    public function test_task($table,  $columns,  $records): void {
+    public function test_task($table, $columns, $records): void {
         global $DB;
         $this->resetAfterTest();
         // Disable size filter for tests as examples are under the default size.

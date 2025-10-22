@@ -22,18 +22,18 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 // Plugin strings.
+$string['checkbase64check'] = 'Base64 data';
+$string['checkbase64column'] = 'The \'{$a->column}\' column of the \'{$a->table}\' table contains {$a->size} of base64-encoded data across {$a->records} records';
+$string['checkbase64info'] = 'The database contains {$a->size} of base64-encoded data across {$a->columns} columns and {$a->records} records';
+$string['checkbase64ok'] = 'No base64 data over the minimum threshold of {$a} was detected';
+$string['displayreport'] = 'Display report';
+$string['generatereport'] = 'Generate report';
 $string['pluginname'] = 'Base64 Encoder';
 $string['privacy:metadata'] = 'The Site admin presets tool does not store any personal data.';
-$string['generatereport'] = 'Generate report';
-$string['displayreport'] = 'Display report';
-$string['viewreport'] = 'View report';
 $string['queuereport'] = 'Queue base64-encoded data report generation';
-$string['checkbase64check'] = 'Base64 data';
-$string['checkbase64ok'] = 'No base64 data over the minimum threshold of {$a} was detected';
-$string['checkbase64info'] = 'The database contains {$a->size} of base64-encoded data across {$a->columns} columns and {$a->records} records';
-$string['checkbase64column'] = 'The \'{$a->column}\' column of the \'{$a->table}\' table contains {$a->size} of base64-encoded data across {$a->records} records';
 $string['sizesetting'] = 'Size setting';
 $string['sizesettingdesc'] = 'The size in kilobytes to flag in the generated report.';
+$string['viewreport'] = 'View report';
 
 // Generate page strings.
 $string['generate'] = 'Generate';

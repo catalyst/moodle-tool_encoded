@@ -109,7 +109,7 @@ class helper {
             return $variablecontext->instanceid ?? 0;
         }
 
-        switch(self::get_contextlevel($record, $mapping)) {
+        switch (self::get_contextlevel($record, $mapping)) {
             case CONTEXT_MODULE:
                 return self::get_coursemodule_id($record, $mapping);
             case CONTEXT_COURSE:
@@ -156,7 +156,7 @@ class helper {
             return $record->context;
         }
 
-        switch($mapping['context'] ?? null) {
+        switch ($mapping['context'] ?? null) {
             case self::CONTEXT_QUESTION:
                 $context = self::get_question_context($record);
                 break;
@@ -221,7 +221,7 @@ class helper {
      */
     public static function get_grade_context(\stdClass $record) {
         global $CFG, $DB;
-        require_once($CFG->libdir.'/gradelib.php');
+        require_once($CFG->libdir . '/gradelib.php');
 
         $itemid = $DB->get_field($record->report_table, 'itemid', ['id' => $record->native_id]);
         if (empty($itemid)) {

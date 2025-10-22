@@ -180,7 +180,7 @@ class migrate extends adhoc_task {
             return '';
         }
 
-        switch(helper::get_contextlevel($record, $mapping)) {
+        switch (helper::get_contextlevel($record, $mapping)) {
             case CONTEXT_MODULE:
                 $context = \context_module::instance($record->instance_id, IGNORE_MISSING);
                 break;

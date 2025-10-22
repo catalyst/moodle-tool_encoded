@@ -25,7 +25,7 @@ namespace tool_encoded;
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @coversDefaultClass \tool_encoded\helper
  */
-class helper_test extends \advanced_testcase {
+final class helper_test extends \advanced_testcase {
     /**
      * Set up before each test.
      */

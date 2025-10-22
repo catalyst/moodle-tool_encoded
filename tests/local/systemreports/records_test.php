@@ -30,7 +30,7 @@ defined('MOODLE_INTERNAL') || die();
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @covers    \tool_encoded\local\systemreports\records
  */
-class records_test extends \advanced_testcase {
+final class records_test extends \advanced_testcase {
     public function test_records(): void {
         global $DB;
         $this->resetAfterTest();

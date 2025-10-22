@@ -27,7 +27,6 @@ use tool_encoded\helper;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class generate extends \flexible_table {
-
     /**
      * @var array table info and summary
      */
@@ -268,7 +267,7 @@ class generate extends \flexible_table {
      */
     public function sort_data() {
         $sortcols = $this->get_sort_columns();
-        usort($this->tabledata, function($a, $b) use ($sortcols) {
+        usort($this->tabledata, function ($a, $b) use ($sortcols) {
             foreach ($sortcols as $col => $tdir) {
                 $cmp = $a->$col <=> $b->$col;
                 if ($cmp !== 0) {
@@ -292,13 +291,19 @@ class generate extends \flexible_table {
         // Add generate all button.
         $generateallbutton = new \single_button(
             new \moodle_url('/admin/tool/encoded/generate.php', ['table' => 'all', 'sesskey' => sesskey()]),
-            get_string('queuealltables', 'tool_encoded', count($this->tabledata)), 'post', helper::get_button_type());
+            get_string('queuealltables', 'tool_encoded', count($this->tabledata)),
+            'post',
+            helper::get_button_type()
+        );
         $generateallbutton->add_confirm_action(get_string('confirmgenerate', 'tool_encoded'));
         $buttons .= $OUTPUT->render($generateallbutton);
 
         // Add link to report page.
-        $buttons .= \html_writer::link(new \moodle_url('/admin/tool/encoded/index.php'),
-            get_string('viewreport', 'tool_encoded'), ['class' => 'btn btn-secondary m-1']);
+        $buttons .= \html_writer::link(
+            new \moodle_url('/admin/tool/encoded/index.php'),
+            get_string('viewreport', 'tool_encoded'),
+            ['class' => 'btn btn-secondary m-1']
+        );
 
         return $buttons;
     }

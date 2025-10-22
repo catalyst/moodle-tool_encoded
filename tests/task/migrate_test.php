@@ -162,7 +162,7 @@ final class migrate_test extends advanced_testcase {
             'label',
             'mod_label',
             'columns' => [
-                'intro' => '<img alt="Test image" src="'. $source .'" />',
+                'intro' => '<img alt="Test image" src="' . $source . '" />',
             ],
         ];
 

@@ -34,7 +34,6 @@ function xmldb_tool_encoded_upgrade($oldversion) {
     $dbman = $DB->get_manager();
 
     if ($oldversion < 2025062600) {
-
         // Changing type of field report_table on table tool_encoded_base64_tables to char.
         $table = new xmldb_table('tool_encoded_base64_tables');
         $field = new xmldb_field('report_table', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL, null, null, 'id');
