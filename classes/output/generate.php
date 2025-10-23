@@ -27,7 +27,6 @@ use tool_encoded\helper;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class generate extends \flexible_table {
-
     /**
      * @var array table info and summary
      */
@@ -121,17 +120,7 @@ class generate extends \flexible_table {
         // Cached fetch.
         $tables = $DB->get_tables();
         foreach ($tables as $table) {
-            $tablecols = $DB->get_columns($table);
-            $potentialcols = [];
-            foreach ($tablecols as $column) {
-                // Only convert columns that are either text or long varchar.
-                if ($column->meta_type == 'X' || ($column->meta_type == 'C' && $column->max_length > 255)) {
-                    // We only want fields that have an associated format col as they are editable by the user.
-                    if (array_key_exists($column->name . 'format', $tablecols)) {
-                        $potentialcols[] = $column->name;
-                    }
-                }
-            }
+            $potentialcols = self::get_editor_columns($table);
 
             // Add tables with potential columns to the report.
             if (!empty($potentialcols)) {
@@ -151,6 +140,39 @@ class generate extends \flexible_table {
             }
         }
         ksort($this->tabledata);
+    }
+
+    /**
+     * Gets columns that contain user editable text.
+     *
+     * @param string $table
+     * @return array column names
+     */
+    public static function get_editor_columns(string $table): array {
+        global $DB;
+
+        // Some editor columns don't have an exact match for the 'format' column and need to be hardcoded.
+        $includecolumns = [
+            'assignfeedback_comments' => [
+                'commenttext' => 'commentformat',
+            ],
+            'assignsubmission_onlinetext' => [
+                'onlinetext' => 'onlineformat',
+            ],
+        ];
+
+        $editorcolumns = [];
+        $tablecols = $DB->get_columns($table);
+        foreach ($tablecols as $column) {
+            // Only convert columns that are either text or long varchar.
+            if ($column->meta_type == 'X' || ($column->meta_type == 'C' && $column->max_length > 255)) {
+                // We only want fields that have an associated format col as they are editable by the user.
+                if (array_key_exists($column->name . 'format', $tablecols) || isset($includecolumns[$table][$column->name])) {
+                    $editorcolumns[] = $column->name;
+                }
+            }
+        }
+        return $editorcolumns;
     }
 
     /**
@@ -245,7 +267,7 @@ class generate extends \flexible_table {
      */
     public function sort_data() {
         $sortcols = $this->get_sort_columns();
-        usort($this->tabledata, function($a, $b) use ($sortcols) {
+        usort($this->tabledata, function ($a, $b) use ($sortcols) {
             foreach ($sortcols as $col => $tdir) {
                 $cmp = $a->$col <=> $b->$col;
                 if ($cmp !== 0) {
@@ -269,13 +291,19 @@ class generate extends \flexible_table {
         // Add generate all button.
         $generateallbutton = new \single_button(
             new \moodle_url('/admin/tool/encoded/generate.php', ['table' => 'all', 'sesskey' => sesskey()]),
-            get_string('queuealltables', 'tool_encoded', count($this->tabledata)), 'post', helper::get_button_type());
+            get_string('queuealltables', 'tool_encoded', count($this->tabledata)),
+            'post',
+            helper::get_button_type()
+        );
         $generateallbutton->add_confirm_action(get_string('confirmgenerate', 'tool_encoded'));
         $buttons .= $OUTPUT->render($generateallbutton);
 
         // Add link to report page.
-        $buttons .= \html_writer::link(new \moodle_url('/admin/tool/encoded/index.php'),
-            get_string('viewreport', 'tool_encoded'), ['class' => 'btn btn-secondary m-1']);
+        $buttons .= \html_writer::link(
+            new \moodle_url('/admin/tool/encoded/index.php'),
+            get_string('viewreport', 'tool_encoded'),
+            ['class' => 'btn btn-secondary m-1']
+        );
 
         return $buttons;
     }

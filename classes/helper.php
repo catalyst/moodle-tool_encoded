@@ -32,6 +32,9 @@ class helper {
     /** @var string Context used for questions in mapping because it is variable */
     public const CONTEXT_QUESTION = 'question';
 
+    /** @var string Context used for grades in mapping because it is variable */
+    public const CONTEXT_GRADE = 'grade';
+
     /** @var array Preferred extensions to use for mimetypes */
     public const PREFERRED_EXTENSIONS = [
         'image/jpeg'        => 'jpg',
@@ -101,13 +104,14 @@ class helper {
             return 0;
         }
 
-        if (isset($mapping['context']) && $mapping['context'] === self::CONTEXT_QUESTION) {
-            return self::get_question_context($record)->instanceid ?? 0;
+        $variablecontext = self::get_variable_context($record, $mapping);
+        if (isset($variablecontext)) {
+            return $variablecontext->instanceid ?? 0;
         }
 
-        switch(self::get_contextlevel($record, $mapping)) {
+        switch (self::get_contextlevel($record, $mapping)) {
             case CONTEXT_MODULE:
-                return self::get_module_id($record, $mapping);
+                return self::get_coursemodule_id($record, $mapping);
             case CONTEXT_COURSE:
                 return self::get_course_id($record, $mapping);
             // TODO: Implement remaining contexts.
@@ -130,11 +134,44 @@ class helper {
             return null;
         }
 
-        if ($mapping['context'] === self::CONTEXT_QUESTION) {
-            return self::get_question_context($record, true)->contextlevel ?? null;
+        $variablecontext = self::get_variable_context($record, $mapping, true);
+        if (isset($variablecontext)) {
+            return $variablecontext->contextlevel ?? null;
         }
 
         return $mapping['context'];
+    }
+
+
+    /**
+     * Gets context for a record that can be variable
+     *
+     * @param \stdClass $record
+     * @param array $mapping
+     * @param bool $addtorecord store the context in the record
+     * @return mixed
+     */
+    public static function get_variable_context(\stdClass $record, array $mapping, bool $addtorecord = false) {
+        if (isset($record->context)) {
+            return $record->context;
+        }
+
+        switch ($mapping['context'] ?? null) {
+            case self::CONTEXT_QUESTION:
+                $context = self::get_question_context($record);
+                break;
+            case self::CONTEXT_GRADE:
+                $context = self::get_grade_context($record);
+                break;
+            default:
+                return null;
+        }
+
+        if (!empty($context) && $addtorecord) {
+            $record->context = $context;
+        }
+
+        return $context;
     }
 
 
@@ -143,37 +180,56 @@ class helper {
      * This is variable and based upon the question category
      *
      * @param \stdClass $record
-     * @param bool $addtorecord store the context in the record
      * @return mixed
      */
-    public static function get_question_context(\stdClass $record, bool $addtorecord = false) {
+    public static function get_question_context(\stdClass $record) {
         global $DB;
 
-        if (isset($record->context)) {
-            return $record->context;
-        }
-
+        // Manually get context to avoid loading the question.
         $joins = "JOIN {question_versions} qv ON q.id = qv.questionid
             JOIN {question_bank_entries} qbe ON qbe.id = qv.questionbankentryid
             JOIN {question_categories} qc ON qc.id = qbe.questioncategoryid
             JOIN {context} c ON c.id = qc.contextid";
 
-        if ($record->report_table === 'question') {
+        $table = $record->report_table;
+        if ($table === 'question') {
             $where = "q.id = :questionid";
             $params = ['questionid' => $record->native_id];
-        } else if ($record->report_table === 'qtype_match_subquestions') {
-            $joins .= " JOIN {qtype_match_subquestions} subq ON subq.questionid = q.id";
+        } else if ($table === 'question_answers') {
+            $joins .= " JOIN {{$table}} qa ON qa.question = q.id";
+            $where = "qa.id = :questionanswerid";
+            $params = ['questionanswerid' => $record->native_id];
+        } else if (strpos($table, 'qtype_') === 0) {
+            // All tables starting with qtype should contain questionid.
+            $joins .= " JOIN {{$table}} subq ON subq.questionid = q.id";
             $where = "subq.id = :subqid";
             $params = ['subqid' => $record->native_id];
+        } else {
+            return false;
         }
 
         $sql = "SELECT c.* FROM {question} q $joins WHERE $where";
-        $context = $DB->get_record_sql($sql, $params);
-        if ($addtorecord && !empty($context)) {
-            $record->context = $context;
+        return $DB->get_record_sql($sql, $params);
+    }
+
+    /**
+     * Gets the context of a grade
+     * This is variable and based upon the grade item
+     *
+     * @param \stdClass $record
+     * @return mixed
+     */
+    public static function get_grade_context(\stdClass $record) {
+        global $CFG, $DB;
+        require_once($CFG->libdir . '/gradelib.php');
+
+        $itemid = $DB->get_field($record->report_table, 'itemid', ['id' => $record->native_id]);
+        if (empty($itemid)) {
+            return false;
         }
 
-        return $context;
+        $grade = new \grade_grade(['itemid' => $itemid], false);
+        return $grade->get_context();
     }
 
     /**
@@ -200,36 +256,37 @@ class helper {
     }
 
     /**
-     * Attempts to get the module id for some module subtables.
+     * Attempts to get the coursemodule id.
      *
      * @param \stdClass $record
      * @param array $mapping
      * @return int
      */
-    private static function get_module_id(\stdClass $record, array $mapping): int {
+    private static function get_coursemodule_id(\stdClass $record, array $mapping): int {
         global $DB;
 
-        $modulename = str_replace('mod_', '', $mapping['component']);
+        $modulename = $mapping['modulename'] ?? str_replace('mod_', '', $mapping['component']);
         $module = $DB->get_record('modules', ['name' => $modulename]);
         if (!isset($module)) {
             return 0;
         }
 
+        // To get the coursemodule id, we need the module instance id.
         $table = $record->report_table;
-        $modulecols = array_keys($DB->get_columns($modulename));
-        if (!empty($simplejoin = $mapping['simplejoin']) && in_array('course', $modulecols)) {
-            $sql = "SELECT
-                        cm.id
-                    FROM
-                        {{$table}} t
-                    JOIN {{$modulename}} m ON m.id = t.{$simplejoin}
-                    JOIN {course_modules} cm ON cm.course = m.course AND cm.instance = m.id AND cm.module = :moduleid
-                    WHERE t.id = :nativeid";
-            $params = [
-                'moduleid' => $module->id,
-                'nativeid' => $record->native_id,
-            ];
-            return $DB->get_record_sql($sql, $params)->id ?? 0;
+        if (isset($mapping['simplelookup'])) {
+            // If the instance id is in the same table we can get this with a simple lookup.
+            $moduleinstance = $DB->get_field($table, $mapping['simplelookup'], ['id' => $record->native_id]);
+        } else if ($table === 'forum_posts') {
+            $sql = "SELECT d.forum
+                      FROM {forum_posts} p
+                      JOIN {forum_discussions} d ON d.id = p.discussion
+                     WHERE p.id = :postid";
+            $params = ['postid' => $record->native_id];
+            $moduleinstance = $DB->get_field_sql($sql, $params);
+        }
+
+        if (!empty($moduleinstance)) {
+            return get_coursemodule_from_instance($modulename, $moduleinstance)->id ?? 0;
         }
         return 0;
     }
@@ -252,13 +309,42 @@ class helper {
             return '';
         }
 
-        // Add in proper ids.
-        $link = str_replace('{$id}', $record->native_id, $link);
-        $link = str_replace('{$cmid}', $record->instance_id, $link);
+        return self::resolve_placeholder_ids($record, $link, $contextlevel);
+    }
 
-        $courseid = $contextlevel == CONTEXT_COURSE ? $record->instance_id : 1;
-        $link = str_replace('{$courseid}', $courseid, $link);
-        return $link;
+    /**
+     * Resolves placeholder IDs.
+     *
+     * @param \stdClass $record
+     * @param string $text text to resolve
+     * @param string $contextlevel
+     * @return string
+     */
+    public static function resolve_placeholder_ids(\stdClass $record, string $text, string $contextlevel): string {
+        global $DB;
+
+        $text = str_replace('{$id}', $record->native_id, $text);
+        $text = str_replace('{$cmid}', $record->instance_id, $text);
+
+        $courseid = $contextlevel == CONTEXT_COURSE ? $record->instance_id : SITEID;
+        $text = str_replace('{$courseid}', $courseid, $text);
+
+        // Some may require DB calls. TODO: Look into storing other ids in the record.
+        if (strpos($text, '{$assigngradeid}') !== false) {
+            if ($assigngradeid = $DB->get_field($record->report_table, 'grade', ['id' => $record->native_id])) {
+                $text = str_replace('{$assigngradeid}', $assigngradeid, $text);
+            }
+        } else if (strpos($text, '{$assignsubmissionid}') !== false) {
+            if ($assignsubmissionid = $DB->get_field($record->report_table, 'submission', ['id' => $record->native_id])) {
+                $text = str_replace('{$assignsubmissionid}', $assignsubmissionid, $text);
+            }
+        } else if (strpos($text, '{$questionid') !== false) {
+            $columnname = $record->report_table === 'question_answers' ? 'question' : 'questionid';
+            if ($questionid = $DB->get_field($record->report_table, $columnname, ['id' => $record->native_id])) {
+                $text = str_replace('{$questionid}', $questionid, $text);
+            }
+        }
+        return $text;
     }
 
     /**
@@ -309,14 +395,56 @@ class helper {
                     'view' => '/question/bank/editquestion/question.php?courseid={$courseid}&id={$id}',
                 ],
             ],
+            'question_answers' => [
+                'answer' => [
+                    'component' => 'question',
+                    'filearea' => 'answer',
+                    'context' => self::CONTEXT_QUESTION,
+                    'itemid' => '{$id}',
+                    'view' => '/question/bank/editquestion/question.php?courseid={$courseid}&id={$questionid}',
+                ],
+                'feedback' => [
+                    'component' => 'question',
+                    'filearea' => 'answerfeedback',
+                    'context' => self::CONTEXT_QUESTION,
+                    'itemid' => '{$id}',
+                    'view' => '/question/bank/editquestion/question.php?courseid={$courseid}&id={$questionid}',
+                ],
+            ],
             'qtype_match_subquestions' => [
                 'questiontext' => [
                     'component' => 'qtype_match',
                     'filearea' => 'subquestion',
                     'context' => self::CONTEXT_QUESTION,
                     'itemid' => '{$id}',
-                    'view' => '',
+                    'view' => '/question/bank/editquestion/question.php?courseid={$courseid}&id={$questionid}',
                 ],
+            ],
+            'qtype_ddmatch_subquestions' => [
+                'answertext' => [
+                    'component' => 'qtype_ddmatch',
+                    'filearea' => 'subanswer',
+                    'context' => self::CONTEXT_QUESTION,
+                    'itemid' => '{$id}',
+                    'view' => '/question/bank/editquestion/question.php?courseid={$courseid}&id={$questionid}',
+                ],
+                'questiontext' => [
+                    'component' => 'qtype_ddmatch',
+                    'filearea' => 'subquestion',
+                    'context' => self::CONTEXT_QUESTION,
+                    'itemid' => '{$id}',
+                    'view' => '/question/bank/editquestion/question.php?courseid={$courseid}&id={$questionid}',
+                ],
+            ],
+            'qtype_essay_options' => [
+                'graderinfo' => [
+                    'component' => 'qtype_essay',
+                    'filearea' => 'graderinfo',
+                    'context' => self::CONTEXT_QUESTION,
+                    'itemid' => '{$id}',
+                    'view' => '/question/bank/editquestion/question.php?courseid={$courseid}&id={$questionid}',
+                ],
+                // The responsetemplate column doesn't allow pluginfiles so we can't store the data safely.
             ],
             'course_sections' => [
                 'summary' => [
@@ -334,7 +462,7 @@ class helper {
                     'context' => CONTEXT_MODULE,
                     'itemid' => '{$id}',
                     'view' => '/mod/book/edit.php?cmid={$cmid}&id={$id}',
-                    'simplejoin' => 'bookid',
+                    'simplelookup' => 'bookid',
                 ],
             ],
             'lesson_pages' => [
@@ -344,7 +472,67 @@ class helper {
                     'context' => CONTEXT_MODULE,
                     'itemid' => '{$id}',
                     'view' => '/mod/lesson/editpage.php?id={$cmid}&pageid={$id}&edit=1',
-                    'simplejoin' => 'lessonid',
+                    'simplelookup' => 'lessonid',
+                ],
+            ],
+            'forum_posts' => [
+                'message' => [
+                    'component' => 'mod_forum',
+                    'filearea' => 'post',
+                    'context' => CONTEXT_MODULE,
+                    'itemid' => '{$id}',
+                    'view' => '/mod/forum/post.php?edit={$id}',
+                ],
+            ],
+            'page' => [
+                'content' => [
+                    'component' => 'mod_page',
+                    'filearea' => 'content',
+                    'context' => CONTEXT_MODULE,
+                    'itemid' => 0,
+                    'view' => '/course/modedit.php?update={$cmid}',
+                ],
+            ],
+            'grade_grades' => [
+                'feedback' => [
+                    'component' => 'grade',
+                    'filearea' => 'feedback',
+                    'context' => self::CONTEXT_GRADE,
+                    'itemid' => '{$id}',
+                    'view' => '',
+                ],
+            ],
+            'grade_grades_history' => [
+                'feedback' => [
+                    'component' => 'grade',
+                    'filearea' => 'historyfeedback',
+                    'context' => self::CONTEXT_GRADE,
+                    'itemid' => '{$id}',
+                    'view' => '',
+                ],
+            ],
+            'assignfeedback_comments' => [
+                'commenttext' => [
+                    'component' => 'assignfeedback_comments',
+                    'filearea' => 'feedback',
+                    'context' => CONTEXT_MODULE,
+                    'itemid' => '{$assigngradeid}',
+                    'view' => '/mod/assign/view.php?id={$cmid}&gid={$assigngradeid}&plugin=comments' .
+                        '&action=viewpluginassignfeedback&returnaction=grading&returnparams',
+                    'simplelookup' => 'assignment',
+                    'modulename' => 'assign',
+                ],
+            ],
+            'assignsubmission_onlinetext' => [
+                'onlinetext' => [
+                    'component' => 'assignsubmission_onlinetext',
+                    'filearea' => 'submissions_onlinetext',
+                    'context' => CONTEXT_MODULE,
+                    'itemid' => '{$assignsubmissionid}',
+                    'view' => '/mod/assign/view.php?id={$cmid}&sid={$assignsubmissionid}&plugin=onlinetext' .
+                        '&action=viewpluginassignsubmission&returnaction=grading&returnparams',
+                    'simplelookup' => 'assignment',
+                    'modulename' => 'assign',
                 ],
             ],
         ];

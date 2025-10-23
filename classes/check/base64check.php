@@ -29,7 +29,6 @@ use tool_encoded\output\summary;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class base64check extends check {
-
     /** @var int Threshold total size in bytes after which should warn about base64 data **/
     public const WARNTHRESHOLD = 10 * 1024 * 1024;
 

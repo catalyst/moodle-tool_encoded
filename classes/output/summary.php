@@ -25,7 +25,6 @@ namespace tool_encoded\output;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class summary extends \table_sql {
-
     /**
      * Constructor.
      */

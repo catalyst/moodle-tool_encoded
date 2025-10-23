@@ -35,7 +35,6 @@ use tool_encoded\helper;
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class records extends base {
-
     /**
      * Database tables that this entity uses and their default aliases
      *
@@ -143,7 +142,7 @@ class records extends base {
             ->add_field("{$tablealias}.encoded_size")
             ->set_is_sortable(true)
             ->set_disabled_aggregation(['avg', 'count', 'countdistinct', 'max', 'min', 'sum'])
-            ->add_callback(static function(int $value): string {
+            ->add_callback(static function (int $value): string {
                 // Return the bytes as kilobytes.
                 return new lang_string('size', 'tool_encoded', number_format($value / 1024, 2));
             });
@@ -158,7 +157,7 @@ class records extends base {
             ->set_type(column::TYPE_BOOLEAN)
             ->add_field("{$tablealias}.migrated")
             ->set_is_sortable(true)
-            ->add_callback(static function(bool $value): string {
+            ->add_callback(static function (bool $value): string {
                 return format::boolean_as_text($value);
             });
 
@@ -208,7 +207,7 @@ class records extends base {
                 {$tablealias}.instance_id, {$tablealias}.migrated")
             ->set_is_sortable(false)
             ->set_disabled_aggregation(['avg', 'count', 'countdistinct', 'max', 'min', 'sum'])
-            ->add_callback(static function(string $value, \stdClass $row): string {
+            ->add_callback(static function (string $value, \stdClass $row): string {
                 global $OUTPUT;
 
                 $buttons = '';
@@ -216,16 +215,23 @@ class records extends base {
                 // Add migrate button.
                 if (helper::can_migrate($row)) {
                     $migrateparams = ['action' => 'migrate', 'recordid' => $row->id, 'sesskey' => sesskey()];
-                    $migratebutton = new \single_button(new \moodle_url('/admin/tool/encoded/index.php', $migrateparams),
-                        get_string('migrate', 'tool_encoded'), 'post', helper::get_button_type());
+                    $migratebutton = new \single_button(
+                        new \moodle_url('/admin/tool/encoded/index.php', $migrateparams),
+                        get_string('migrate', 'tool_encoded'),
+                        'post',
+                        helper::get_button_type()
+                    );
                     $migratebutton->add_confirm_action(get_string('confirmmigrateid', 'tool_encoded', $row->id));
                     $buttons .= $OUTPUT->render($migratebutton);
                 }
 
                 // Add view button.
                 if ($view = helper::format_view_link($row)) {
-                    $buttons .= \html_writer::link(new \moodle_url($view),
-                        get_string('view'), ['class' => 'btn btn-secondary btn-sm mx-1']);
+                    $buttons .= \html_writer::link(
+                        new \moodle_url($view),
+                        get_string('view'),
+                        ['class' => 'btn btn-secondary btn-sm mx-1']
+                    );
                 }
 
                 return $buttons;
@@ -249,7 +255,7 @@ class records extends base {
             "{$tablealias}.report_table"
         ))
             ->add_joins($this->get_joins())
-            ->set_options_callback(static function(): array {
+            ->set_options_callback(static function (): array {
                 global $DB;
                 $tables = $DB->get_fieldset_sql(
                     'SELECT DISTINCT report_table FROM {tool_encoded_base64_records} ORDER BY report_table ASC'
@@ -270,7 +276,7 @@ class records extends base {
             "{$tablealias}.report_column"
         ))
             ->add_joins($this->get_joins())
-            ->set_options_callback(static function(): array {
+            ->set_options_callback(static function (): array {
                 global $DB;
                 $cols = $DB->get_fieldset_sql(
                     'SELECT DISTINCT report_column FROM {tool_encoded_base64_records} ORDER BY report_column ASC'
@@ -291,7 +297,7 @@ class records extends base {
             "{$tablealias}.mimetype"
         ))
             ->add_joins($this->get_joins())
-            ->set_options_callback(static function(): array {
+            ->set_options_callback(static function (): array {
                 global $DB;
                 $mimes = $DB->get_fieldset_sql(
                     'SELECT DISTINCT mimetype FROM {tool_encoded_base64_records} ORDER BY mimetype ASC'

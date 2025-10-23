@@ -23,6 +23,7 @@ require_once($CFG->dirroot . '/course/lib.php');
 use core\task\adhoc_task;
 use core\task\manager;
 use tool_encoded\helper;
+use tool_encoded\output\generate;
 
 /**
  * Given some columns to migrate, this task will generate a report of potential bad data.
@@ -221,17 +222,7 @@ class generate_report extends adhoc_task {
         // Cached fetch.
         $tables = $DB->get_tables();
         foreach ($tables as $table) {
-            $tablecols = $DB->get_columns($table);
-            $allcols = [];
-            foreach ($tablecols as $column) {
-                // Only convert columns that are either text or long varchar.
-                if ($column->meta_type == 'X' || ($column->meta_type == 'C' && $column->max_length > 255)) {
-                    // We only want fields that have an associated format col as they are editable by the user.
-                    if (array_key_exists($column->name . 'format', $tablecols)) {
-                        $allcols[] = $column->name;
-                    }
-                }
-            }
+            $allcols = generate::get_editor_columns($table);
             if (!empty($allcols)) {
                 $cols = implode(',', $allcols);
                 self::queue($table, $cols);
