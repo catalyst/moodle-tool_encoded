@@ -228,8 +228,13 @@ class helper {
             return false;
         }
 
-        $grade = new \grade_grade(['itemid' => $itemid], false);
-        return $grade->get_context();
+        try {
+            $grade = new \grade_grade(['itemid' => $itemid], false);
+            return $grade->get_context();
+        } catch (\Throwable $e) {
+            // If the grade item no longer exists we can't get context from history alone.
+            return false;
+        }
     }
 
     /**
