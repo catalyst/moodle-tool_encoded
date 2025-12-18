@@ -16,6 +16,10 @@
 
 namespace tool_encoded\output;
 
+defined('MOODLE_INTERNAL') || die();
+
+require_once($CFG->libdir . '/tablelib.php');
+
 use tool_encoded\helper;
 
 /**
