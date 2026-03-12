@@ -33,6 +33,10 @@ class summary extends \table_sql {
 
         parent::__construct('tool_encoded_summary');
 
+        if (!$PAGE->has_set_url()) {
+            $PAGE->set_url(new moodle_url('/admin/tool/encoded/index.php'));
+        }
+
         $this->set_attribute('class', 'generaltable admintable w-auto');
         $this->define_columns(['report_table', 'report_column', 'count', 'max_size', 'total_size', 'mapped']);
         $this->define_headers([
