@@ -63,9 +63,8 @@ final class migrate_test extends advanced_testcase {
     ): void {
         global $DB;
 
-        $this->setOutputCallback(function ($output) {
-            // Ignore output.
-        });
+        // Ignore output.
+        ob_start();
 
         $generator = self::getDataGenerator();
         $creator = $generator->get_plugin_generator($component);
@@ -145,6 +144,8 @@ final class migrate_test extends advanced_testcase {
                 );
             }
         }
+        // Ignore output.
+        ob_end_clean();
     }
 
     /**
