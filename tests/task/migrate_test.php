@@ -63,9 +63,8 @@ final class migrate_test extends advanced_testcase {
     ): void {
         global $DB;
 
-        $this->setOutputCallback(function ($output) {
-            // Ignore output.
-        });
+        // Ignore output.
+        $this->expectOutputRegex('/.*/s');
 
         $generator = self::getDataGenerator();
         $creator = $generator->get_plugin_generator($component);

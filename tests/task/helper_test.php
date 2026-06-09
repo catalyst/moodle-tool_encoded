@@ -103,7 +103,8 @@ final class helper_test extends \advanced_testcase {
         $user = $this->getDataGenerator()->create_user();
         $this->getDataGenerator()->enrol_user($user->id, $course->id);
 
-        // Test mapping of question table to system context.
+        // Test mapping of question table to module context (qbank in site course).
+        // Since Moodle 5.1 question categories always live inside a qbank module context.
         $questiongenerator = $this->getDataGenerator()->get_plugin_generator('core_question');
         $category = $questiongenerator->create_question_category();
         $question = $questiongenerator->create_question('multichoice', null, ['category' => $category->id]);
@@ -116,11 +117,11 @@ final class helper_test extends \advanced_testcase {
 
         $mapping = helper::get_mapping($record);
         $context = helper::get_variable_context($record, $mapping);
-        $systemcontext = \context_system::instance();
-        $this->assertEquals($systemcontext->contextlevel, $context->contextlevel);
-        $this->assertEquals($systemcontext->instanceid, $context->instanceid);
+        $expectedcontext = \context::instance_by_id($category->contextid);
+        $this->assertEquals($expectedcontext->contextlevel, $context->contextlevel);
+        $this->assertEquals($expectedcontext->instanceid, $context->instanceid);
 
-        // Test mapping of question table to course context.
+        // Test mapping of question table to module context (qbank in course).
         $coursecontext = \context_course::instance($course->id);
         $category = $questiongenerator->create_question_category(['contextid' => $coursecontext->id]);
         $question = $questiongenerator->create_question('multichoice', null, ['category' => $category->id]);
@@ -133,10 +134,11 @@ final class helper_test extends \advanced_testcase {
 
         $mapping = helper::get_mapping($record);
         $context = helper::get_variable_context($record, $mapping);
-        $this->assertEquals($coursecontext->contextlevel, $context->contextlevel);
-        $this->assertEquals($coursecontext->instanceid, $context->instanceid);
+        $expectedcontext = \context::instance_by_id($category->contextid);
+        $this->assertEquals($expectedcontext->contextlevel, $context->contextlevel);
+        $this->assertEquals($expectedcontext->instanceid, $context->instanceid);
 
-        // Test mapping of question type tables to course context.
+        // Test mapping of question type tables to module context (qbank in course).
         $category = $questiongenerator->create_question_category(['contextid' => $coursecontext->id]);
         $question = $questiongenerator->create_question('match', null, ['category' => $category->id]);
 
@@ -149,8 +151,9 @@ final class helper_test extends \advanced_testcase {
 
         $mapping = helper::get_mapping($record);
         $context = helper::get_variable_context($record, $mapping);
-        $this->assertEquals($coursecontext->contextlevel, $context->contextlevel);
-        $this->assertEquals($coursecontext->instanceid, $context->instanceid);
+        $expectedcontext = \context::instance_by_id($category->contextid);
+        $this->assertEquals($expectedcontext->contextlevel, $context->contextlevel);
+        $this->assertEquals($expectedcontext->instanceid, $context->instanceid);
 
         // Test mapping of grade grades to module context.
         $assign = $this->getDataGenerator()->create_module('assign', [
