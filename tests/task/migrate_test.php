@@ -64,7 +64,7 @@ final class migrate_test extends advanced_testcase {
         global $DB;
 
         // Ignore output.
-        ob_start();
+        $this->expectOutputRegex('/.*/s');
 
         $generator = self::getDataGenerator();
         $creator = $generator->get_plugin_generator($component);
@@ -144,8 +144,6 @@ final class migrate_test extends advanced_testcase {
                 );
             }
         }
-        // Ignore output.
-        ob_end_clean();
     }
 
     /**
