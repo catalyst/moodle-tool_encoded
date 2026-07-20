@@ -25,7 +25,7 @@ contain base64 encoded data and then automated the fixing of this data back into
 
 | Moodle version | Branch                 | PHP  |
 |----------------|------------------------|------|
-| Moodle 5.1     | `MOODLE_501_STABLE`    | 8.2+ |
+| Moodle 5.1+    | `MOODLE_501_STABLE`    | 8.2+ |
 | Moodle 4.1-4.5 | `MOODLE_401_STABLE`    | 7.4+ |
 
 ## Installation
