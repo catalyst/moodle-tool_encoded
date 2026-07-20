@@ -27,4 +27,4 @@ defined('MOODLE_INTERNAL') || die();
 $plugin->component = 'tool_encoded';
 $plugin->version = 20250102400;
 $plugin->requires = 2025100600;
-$plugin->supported = [501, 502];
+$plugin->supported = [401, 502];
