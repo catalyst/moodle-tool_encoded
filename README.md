@@ -23,10 +23,9 @@ contain base64 encoded data and then automated the fixing of this data back into
 
 ## Branches
 
-| Moodle version | Branch                 | PHP  |
-|----------------|------------------------|------|
-| Moodle 5.1+    | `MOODLE_401_STABLE`    | 8.2+ |
-| Moodle 4.1-4.5 | `MOODLE_401_STABLE`    | 7.4+ |
+| Moodle version | Branch              | PHP  |
+|----------------|---------------------|------|
+| Moodle 4.1+    | `MOODLE_401_STABLE` | 7.4+ |
 
 ## Installation
 1. Clone this repository into admin/tool/encoded
