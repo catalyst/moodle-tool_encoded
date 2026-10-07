@@ -43,7 +43,7 @@ class base64check extends check {
      *
      * @param \stdClass|null $base64col
      */
-    public function __construct(\stdClass $base64col = null) {
+    public function __construct(?\stdClass $base64col = null) {
         $this->base64col = $base64col;
     }
 
